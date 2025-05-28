@@ -1460,4 +1460,45 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
   luaC_objbarrier(L, f1, *up1);
 }
 
+LUA_API int lua_addr (lua_State *L, int idx) {
+  Table *t;
+  const TValue *val;
+  lua_lock(L);
+  api_checknelems(L, 1);
+  t = gettable(L, idx);
+  val = luaH_get(t, s2v(L->top.p - 1));
+  L->top.p--;  /* remove key */
+  if (isempty(val))  /* avoid copying empty items to the stack */
+    setnilvalue(s2v(L->top.p));
+  else
+    setpvalue(s2v(L->top.p), (void*)val);
+  api_incr_top(L);
+  lua_unlock(L);
+  return ttype(s2v(L->top.p - 1));
+}
+
+
+LUA_API void lua_deref (lua_State *L, int idx) {
+  const TValue *ptr, *addr;
+  lua_lock(L);
+  ptr = index2value(L, idx);
+  addr = (TValue*)pvalue(ptr);
+  setobj2s(L, L->top.p, addr);
+  api_incr_top(L);
+  lua_unlock(L);
+}
+
+
+LUA_API void lua_assign (lua_State *L, int idx) {
+  const TValue *ptr, *val;
+  TValue *addr;
+  lua_lock(L);
+  api_checknelems(L, 1);
+  ptr = index2value(L, idx);
+  val = s2v(L->top.p - 1);
+  addr = (TValue*)pvalue(ptr);
+  *addr = *val;
+  setobj2s(L, L->top.p - 1, val);
+  lua_unlock(L);
+}
 
