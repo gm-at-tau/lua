@@ -48,6 +48,7 @@
 */
 typedef union Value {
   struct GCObject *gc;    /* collectable objects */
+  struct TValue *a;	/* address */
   void *p;         /* light userdata */
   lua_CFunction f; /* light C functions */
   lua_Integer i;   /* integer numbers */
@@ -412,6 +413,25 @@ typedef struct TString {
 
 /* }================================================================== */
 
+/*
+** {==================================================================
+** Address
+** ===================================================================
+*/
+
+
+#define LUA_VADDRESS	makevariant(LUA_TADDRESS, 0)
+
+#define ttisaddress(o)	checktag((o), LUA_VADDRESS)
+
+#define avalue(o)	check_exp(ttisaddress(o), val_(o).a)
+
+#define avalueraw(v)	((v).a)
+
+#define setavalue(obj,x) \
+  { TValue *io=(obj); val_(io).a=(x); settt_(io, LUA_VADDRESS); }
+
+/* }================================================================== */
 
 /*
 ** {==================================================================

@@ -170,6 +170,10 @@ static Node *mainpositionTV (const Table *t, const TValue *key) {
       return hashboolean(t, 0);
     case LUA_VTRUE:
       return hashboolean(t, 1);
+    case LUA_VADDRESS: { // IDEA: instead of tailcall, loop
+      const TValue *a = avalue(key);
+      return mainpositionTV(t, a);
+    }
     case LUA_VLIGHTUSERDATA: {
       void *p = pvalue(key);
       return hashpointer(t, p);
@@ -224,6 +228,8 @@ static int equalkey (const TValue *k1, const Node *n2, int deadok) {
       return (ivalue(k1) == keyival(n2));
     case LUA_VNUMFLT:
       return luai_numeq(fltvalue(k1), fltvalueraw(keyval(n2)));
+    case LUA_VADDRESS:
+      return avalue(k1) == avalueraw(keyval(n2));
     case LUA_VLIGHTUSERDATA:
       return pvalue(k1) == pvalueraw(keyval(n2));
     case LUA_VLCF:

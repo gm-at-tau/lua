@@ -476,6 +476,8 @@ LUA_API const void *lua_topointer (lua_State *L, int idx) {
   const TValue *o = index2value(L, idx);
   switch (ttypetag(o)) {
     case LUA_VLCF: return cast_voidp(cast_sizet(fvalue(o)));
+    case LUA_VADDRESS:
+      return avalue(o);
     case LUA_VUSERDATA: case LUA_VLIGHTUSERDATA:
       return touserdata(o);
     default: {
@@ -1471,7 +1473,7 @@ LUA_API int lua_addr (lua_State *L, int idx) {
   if (isempty(val))  /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));
   else
-    setpvalue(s2v(L->top.p), (void*)val);
+    setavalue(s2v(L->top.p), (TValue*)val);
   api_incr_top(L);
   lua_unlock(L);
   return ttype(s2v(L->top.p - 1));
@@ -1479,25 +1481,22 @@ LUA_API int lua_addr (lua_State *L, int idx) {
 
 
 LUA_API void lua_deref (lua_State *L, int idx) {
-  const TValue *ptr, *addr;
+  const TValue *addr;
   lua_lock(L);
-  ptr = index2value(L, idx);
-  addr = (TValue*)pvalue(ptr);
-  setobj2s(L, L->top.p, addr);
+  addr = index2value(L, idx);
+  setobj2s(L, L->top.p, avalue(addr));
   api_incr_top(L);
   lua_unlock(L);
 }
 
 
 LUA_API void lua_assign (lua_State *L, int idx) {
-  const TValue *ptr, *val;
-  TValue *addr;
+  const TValue *addr, *val;
   lua_lock(L);
   api_checknelems(L, 1);
-  ptr = index2value(L, idx);
+  addr = index2value(L, idx);
   val = s2v(L->top.p - 1);
-  addr = (TValue*)pvalue(ptr);
-  *addr = *val;
+  *avalue(addr) = *val;
   setobj2s(L, L->top.p - 1, val);
   lua_unlock(L);
 }

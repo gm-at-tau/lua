@@ -517,19 +517,20 @@ static int luaB_addr (lua_State *L) {
 
 
 static int luaB_deref (lua_State *L) {
-  luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+  luaL_checktype(L, 1, LUA_TADDRESS);
   lua_deref(L, 1);
   return 1;
 }
 
 
 static int luaB_assign (lua_State *L) {
-  luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+  luaL_checktype(L, 1, LUA_TADDRESS);
   lua_settop(L, 2);
   lua_assign(L, 1);
   return 1;
 }
 
+/* }================================================================== */
 
 static const luaL_Reg base_funcs[] = {
   {"addr", luaB_addr},
