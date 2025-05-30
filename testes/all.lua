@@ -192,6 +192,7 @@ dofile('errors.lua')
 dofile('math.lua')
 dofile('sort.lua', true)
 dofile('bitwise.lua')
+dofile('pointer.lua')
 assert(dofile('verybig.lua', true) == 10); collectgarbage()
 dofile('files.lua')
 
