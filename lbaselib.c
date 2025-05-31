@@ -502,42 +502,10 @@ static int luaB_tostring (lua_State *L) {
   return 1;
 }
 
-/*
-** {======================================================
-** Address
-** =======================================================
-*/
-
-static int luaB_addr (lua_State *L) {
-  luaL_checktype(L, 1, LUA_TTABLE);
-  lua_settop(L, 2);  /* create a 2nd argument if there isn't one */
-  lua_addr(L, 1);
-  return 1;
-}
-
-
-static int luaB_deref (lua_State *L) {
-  luaL_checktype(L, 1, LUA_TADDRESS);
-  lua_deref(L, 1);
-  return 1;
-}
-
-
-static int luaB_assign (lua_State *L) {
-  luaL_checktype(L, 1, LUA_TADDRESS);
-  lua_settop(L, 2);
-  lua_assign(L, 1);
-  return 1;
-}
-
-/* }================================================================== */
 
 static const luaL_Reg base_funcs[] = {
-  {"addr", luaB_addr},
   {"assert", luaB_assert},
-  {"assign", luaB_assign},
   {"collectgarbage", luaB_collectgarbage},
-  {"deref", luaB_deref},
   {"dofile", luaB_dofile},
   {"error", luaB_error},
   {"getmetatable", luaB_getmetatable},

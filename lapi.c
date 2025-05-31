@@ -1496,7 +1496,7 @@ LUA_API void lua_assign (lua_State *L, int idx) {
   api_checknelems(L, 1);
   addr = index2value(L, idx);
   val = s2v(L->top.p - 1);
-  *avalue(addr) = *val;
+  setobj(L, avalue(addr), val);
   setobj2s(L, L->top.p - 1, val);
   lua_unlock(L);
 }
