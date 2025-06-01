@@ -90,11 +90,11 @@ LIBS = -lm
 
 CORE_T=	liblua.a
 CORE_O=	lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o \
-	lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o \
-	ltm.o lundump.o lvm.o lzio.o ltests.o
+	lmem.o lobject.o lopcodes.o lparser.o lpointer.o lstate.o lstring.o \
+	ltable.o ltm.o lundump.o lvm.o lzio.o ltests.o
 AUX_O=	lauxlib.o
 LIB_O=	lbaselib.o ldblib.o liolib.o lmathlib.o loslib.o ltablib.o lstrlib.o \
-	lutf8lib.o loadlib.o lcorolib.o linit.o lpointer.o
+	lutf8lib.o loadlib.o lcorolib.o lptrlib.o linit.o
 
 LUA_T=	lua
 LUA_O=	lua.o
@@ -181,9 +181,13 @@ loslib.o: loslib.c lprefix.h lua.h luaconf.h lauxlib.h lualib.h
 lparser.o: lparser.c lprefix.h lua.h luaconf.h lcode.h llex.h lobject.h \
  llimits.h lzio.h lmem.h lopcodes.h lparser.h ldebug.h lstate.h ltm.h \
  ldo.h lfunc.h lstring.h lgc.h ltable.h
+lpointer.o: lpointer.c lpointer.h lapi.h llimits.h lua.h luaconf.h \
+ lstate.h lobject.h ltm.h lzio.h lmem.h lprefix.h lauxlib.h
+lptrlib.o: lptrlib.c lpointer.h lapi.h llimits.h lua.h luaconf.h lstate.h \
+ lobject.h ltm.h lzio.h lmem.h lprefix.h lauxlib.h
 lstate.o: lstate.c lprefix.h lua.h luaconf.h lapi.h llimits.h lstate.h \
  lobject.h ltm.h lzio.h lmem.h ldebug.h ldo.h lfunc.h lgc.h llex.h \
- lstring.h ltable.h
+ lstring.h ltable.h lpointer.h
 lstring.o: lstring.c lprefix.h lua.h luaconf.h ldebug.h lstate.h \
  lobject.h llimits.h ltm.h lzio.h lmem.h ldo.h lstring.h lgc.h
 lstrlib.o: lstrlib.c lprefix.h lua.h luaconf.h lauxlib.h lualib.h
@@ -206,6 +210,5 @@ lvm.o: lvm.c lprefix.h lua.h luaconf.h ldebug.h lstate.h lobject.h \
  ltable.h lvm.h ljumptab.h
 lzio.o: lzio.c lprefix.h lua.h luaconf.h llimits.h lmem.h lstate.h \
  lobject.h ltm.h lzio.h
-lpointer.o: lpointer.c lpointer.h lprefix.h lua.h lapi.h lauxlib.h lualib.h
 
 # (end of Makefile)

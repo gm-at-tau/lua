@@ -23,6 +23,7 @@
 #include "lgc.h"
 #include "lmem.h"
 #include "lobject.h"
+#include "lpointer.h"
 #include "lstate.h"
 #include "lstring.h"
 #include "ltable.h"
@@ -1465,16 +1466,16 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
 
 LUA_API int lua_addr (lua_State *L, int idx) {
   Table *t;
-  const TValue *val;
+  lua_Ptr val;
   lua_lock(L);
   api_checknelems(L, 1);
   t = gettable(L, idx);
-  val = luaH_get(t, s2v(L->top.p - 1));
+  val = luaA_addr(L, t, s2v(L->top.p - 1));
   L->top.p--;  /* remove key */
   if (isempty(val))  /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));
   else
-    setavalue(s2v(L->top.p), (TValue*)val);
+    setavalue(s2v(L->top.p), val);
   api_incr_top(L);
   lua_unlock(L);
   return ttype(s2v(L->top.p - 1));
@@ -1484,9 +1485,7 @@ LUA_API int lua_addr (lua_State *L, int idx) {
 LUA_API void lua_deref (lua_State *L, int idx) {
   const TValue *addr;
   lua_lock(L);
-  addr = index2value(L, idx);
-  addr = avalue(addr);
-  lua_assert(refcount(addr) != 0);
+  addr = luaA_deref(L, index2value(L, idx));
   setobj2s(L, L->top.p, addr);
   api_incr_top(L);
   lua_unlock(L);
@@ -1498,10 +1497,8 @@ LUA_API void lua_assign (lua_State *L, int idx) {
   lua_lock(L);
   api_checknelems(L, 1);
   addr = index2value(L, idx);
-  addr = avalue(addr);
-  lua_assert(refcount(addr) != 0);
   val = s2v(L->top.p - 1);
-  setobj(L, addr, val);
+  luaA_assign(L, addr, val);
   setobj2s(L, L->top.p - 1, val);
   lua_unlock(L);
 }

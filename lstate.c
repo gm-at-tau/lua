@@ -25,6 +25,7 @@
 #include "lstate.h"
 #include "lstring.h"
 #include "ltable.h"
+#include "lpointer.h"
 #include "ltm.h"
 
 
@@ -232,6 +233,7 @@ static void f_luaopen (lua_State *L, void *ud) {
   global_State *g = G(L);
   UNUSED(ud);
   stack_init(L, L);  /* init stack */
+  luaA_init(L);
   init_registry(L, g);
   luaS_init(L);
   luaT_init(L);
