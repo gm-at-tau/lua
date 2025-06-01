@@ -62,7 +62,7 @@ static void createmetatable(lua_State * L) {
 	luaL_setfuncs(L, pointer_metamethods, 0);
 	{
 		lua_lock(L);
-		setavalue(s2v(L->top.p), NULL); /* dummy address */
+		setavalue(s2v(L->top.p), (TValue*)NULL); /* dummy address */
 		api_incr_top(L);
 		lua_unlock(L);
 	}

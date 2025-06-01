@@ -92,7 +92,7 @@
 
 static const Node dummynode_ = {
   {{NULL}, LUA_VEMPTY,  /* value's value and type */
-   LUA_VNIL, 0, {NULL}}  /* key type, next, and key value */
+   LUA_VNIL, 0, 0, {NULL}}  /* key type, next, and key value */
 };
 
 
@@ -170,9 +170,11 @@ static Node *mainpositionTV (const Table *t, const TValue *key) {
       return hashboolean(t, 0);
     case LUA_VTRUE:
       return hashboolean(t, 1);
-    case LUA_VADDRESS: { // IDEA: instead of tailcall, loop
+    case LUA_VADDRESS: {
       const TValue *a = avalue(key);
-      return mainpositionTV(t, a);
+      lua_assert(!ttisforward(a));
+      /* May invalidate */
+      return hashpointer(t, a);
     }
     case LUA_VLIGHTUSERDATA: {
       void *p = pvalue(key);

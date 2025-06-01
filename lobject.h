@@ -63,7 +63,7 @@ typedef union Value {
 ** an actual value plus a tag with its type.
 */
 
-#define TValuefields	Value value_; lu_byte tt_
+#define TValuefields	Value value_; lu_byte tt_; lu_byte rc_
 
 typedef struct TValue {
   TValuefields;
@@ -219,7 +219,7 @@ typedef union {
 
 
 /* macro defining a value corresponding to an absent key */
-#define ABSTKEYCONSTANT		{NULL}, LUA_VABSTKEY
+#define ABSTKEYCONSTANT		{NULL}, LUA_VABSTKEY, 0
 
 
 /* mark an entry as empty */
@@ -421,15 +421,20 @@ typedef struct TString {
 
 
 #define LUA_VADDRESS	makevariant(LUA_TADDRESS, 0)
+#define LUA_VFWDADDRESS	makevariant(LUA_TADDRESS, 1)
 
-#define ttisaddress(o)	checktag((o), LUA_VADDRESS)
+#define ttisaddress(o)	checktype((o), LUA_TADDRESS) /* not collectable */
+#define ttisforward(o)	checktag((o), LUA_VFWDADDRESS) /* not collectable */
 
 #define avalue(o)	check_exp(ttisaddress(o), val_(o).a)
+#define refcount(v)	((v)->rc_)
 
 #define avalueraw(v)	((v).a)
 
 #define setavalue(obj,x) \
-  { TValue *io=(obj); val_(io).a=(x); settt_(io, LUA_VADDRESS); }
+  { TValue *io=(obj); if (x) refcount(x) |= 1; \
+	val_(io).a=(x); settt_(io, LUA_VADDRESS); }
+
 
 /* }================================================================== */
 

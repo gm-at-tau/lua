@@ -1462,6 +1462,7 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
   luaC_objbarrier(L, f1, *up1);
 }
 
+
 LUA_API int lua_addr (lua_State *L, int idx) {
   Table *t;
   const TValue *val;
@@ -1484,19 +1485,23 @@ LUA_API void lua_deref (lua_State *L, int idx) {
   const TValue *addr;
   lua_lock(L);
   addr = index2value(L, idx);
-  setobj2s(L, L->top.p, avalue(addr));
+  addr = avalue(addr);
+  lua_assert(refcount(addr) != 0);
+  setobj2s(L, L->top.p, addr);
   api_incr_top(L);
   lua_unlock(L);
 }
 
 
 LUA_API void lua_assign (lua_State *L, int idx) {
-  const TValue *addr, *val;
+  TValue *addr, *val;
   lua_lock(L);
   api_checknelems(L, 1);
   addr = index2value(L, idx);
+  addr = avalue(addr);
+  lua_assert(refcount(addr) != 0);
   val = s2v(L->top.p - 1);
-  setobj(L, avalue(addr), val);
+  setobj(L, addr, val);
   setobj2s(L, L->top.p - 1, val);
   lua_unlock(L);
 }
