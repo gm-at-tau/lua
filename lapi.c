@@ -1468,7 +1468,7 @@ LUA_API int lua_addr (lua_State *L, int idx) {
   Table *t;
   lua_Ptr val;
   lua_lock(L);
-  api_checknelems(L, 1);
+  api_checknelems(L, 2);
   t = gettable(L, idx);
   val = luaA_addr(L, t, s2v(L->top.p - 1));
   L->top.p--;  /* remove key */
@@ -1495,7 +1495,7 @@ LUA_API void lua_deref (lua_State *L, int idx) {
 LUA_API void lua_assign (lua_State *L, int idx) {
   TValue *addr, *val;
   lua_lock(L);
-  api_checknelems(L, 1);
+  api_checknelems(L, 2);
   addr = index2value(L, idx);
   val = s2v(L->top.p - 1);
   luaA_assign(L, addr, val);

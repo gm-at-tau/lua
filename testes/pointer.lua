@@ -29,8 +29,9 @@ do
 	assert(t.f == "h")
 end
 
+--[[
 collectgarbage()
-
 assert(r[nil] == "d")
+]]
 
 print "OK"

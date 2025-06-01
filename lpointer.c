@@ -1,5 +1,4 @@
 //
-#include "lobject.h"
 #define lpointer_c
 #define LUA_CORE
 
@@ -9,8 +8,10 @@
 
 #include "lua.h"
 
+#include "lobject.h"
 #include "lpointer.h"
 #include "ltable.h"
+#include "lgc.h"
 
 void luaA_init (lua_State *L) {
 	(void) L;

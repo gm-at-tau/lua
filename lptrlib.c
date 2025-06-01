@@ -1,5 +1,4 @@
 //
-#include "lgc.h"
 #define lptrlib_c
 #define LUA_LIB
 
@@ -13,6 +12,7 @@
 #include "lualib.h"
 #include "lapi.h"
 #include "lobject.h"
+#include "lgc.h"
 
 
 static int pointer_addr (lua_State *L) {
