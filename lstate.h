@@ -159,6 +159,19 @@ typedef struct stringtable {
 } stringtable;
 
 
+typedef struct freenode {
+  TValue *mem;
+  size_t size;
+} freenode;
+
+
+typedef struct freetable {
+  freenode *array;
+  size_t nitems;
+  size_t size;
+} freetable;
+
+
 /*
 ** Information about a call.
 ** About union 'u':
@@ -259,6 +272,7 @@ typedef struct global_State {
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
   stringtable strt;  /* hash table for strings */
+  freetable freetbl;  /* table for "free" arrays which may references alive */
   TValue l_registry;
   TValue nilvalue;  /* a nil value */
   unsigned int seed;  /* randomized seed for hashes */

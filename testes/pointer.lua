@@ -11,13 +11,13 @@ do
 	assert(r[nil] == "d")
 	assert(t[2] == "d")
 
-	--[[
 	t[100] = "e"
 	assert(t[100] == "e")
-	print(ptr.addr(t, 100), r)
-	assert(tostring(r) == string.format("pointer: %p", r))
 	assert(r[nil] == "d")
-	]]
+
+	t[2] = "x"
+	assert(t[2] == "x")
+	assert(r[nil] == "x")
 
 	t.f = "g"
 	s = ptr.addr(t, "f")

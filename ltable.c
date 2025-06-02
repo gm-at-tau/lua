@@ -33,6 +33,7 @@
 #include "lgc.h"
 #include "lmem.h"
 #include "lobject.h"
+#include "lpointer.h"
 #include "lstate.h"
 #include "lstring.h"
 #include "ltable.h"
@@ -578,7 +579,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
     exchangehashpart(t, &newt);  /* and hash (in case of errors) */
   }
   /* allocate new array */
-  newarray = luaM_reallocvector(L, t->array, oldasize, newasize, TValue);
+  newarray = luaA_reallocarray(L, t->array, oldasize, newasize);
   if (l_unlikely(newarray == NULL && newasize > 0)) {  /* allocation failed? */
     freehash(L, &newt);  /* release new hash part */
     luaM_error(L);  /* raise error (with array unchanged) */
@@ -591,6 +592,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
      setempty(&t->array[i]);
   /* re-insert elements from old hash part into new parts */
   reinsert(L, &newt, t);  /* 'newt' now has the old hash */
+  // [] Maybe do not free
   freehash(L, &newt);  /* free old hash part */
 }
 

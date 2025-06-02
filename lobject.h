@@ -73,6 +73,7 @@ typedef struct TValue {
 
 #define val_(o)		((o)->value_)
 #define valraw(o)	(val_(o))
+#define refcount(v)	((v)->rc_)
 
 
 /* raw type tag of a TValue */
@@ -199,7 +200,8 @@ typedef union {
 #define ttisstrictnil(o)	checktag((o), LUA_VNIL)
 
 
-#define setnilvalue(obj) settt_(obj, LUA_VNIL)
+#define setnilvalue(obj) \
+	{ TValue * io = (obj); refcount(io) = 0; settt_(io, LUA_VNIL); }
 
 
 #define isabstkey(v)		checktag((v), LUA_VABSTKEY)
@@ -224,7 +226,8 @@ typedef union {
 
 
 /* mark an entry as empty */
-#define setempty(v)		settt_(v, LUA_VEMPTY)
+#define setempty(obj) \
+	{ TValue * io = (obj); refcount(io) = 0; settt_(io, LUA_VEMPTY); }
 
 
 
@@ -428,7 +431,6 @@ typedef struct TString {
 #define ttisforward(o)	checktag((o), LUA_VFWDADDRESS) /* not collectable */
 
 #define avalue(o)	check_exp(ttisaddress(o), val_(o).a)
-#define refcount(v)	((v)->rc_)
 
 #define avalueraw(v)	((v).a)
 

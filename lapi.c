@@ -540,9 +540,9 @@ LUA_API const char *lua_pushlstring (lua_State *L, const char *s, size_t len) {
 
 LUA_API const char *lua_pushstring (lua_State *L, const char *s) {
   lua_lock(L);
-  if (s == NULL)
+  if (s == NULL) {
     setnilvalue(s2v(L->top.p));
-  else {
+  } else {
     TString *ts;
     ts = luaS_new(L, s);
     setsvalue2s(L, L->top.p, ts);
@@ -715,9 +715,9 @@ LUA_API int lua_geti (lua_State *L, int idx, lua_Integer n) {
 
 
 l_sinline int finishrawget (lua_State *L, const TValue *val) {
-  if (isempty(val))  /* avoid copying empty items to the stack */
+  if (isempty(val)) { /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));
-  else
+  } else
     setobj2s(L, L->top.p, val);
   api_incr_top(L);
   lua_unlock(L);
@@ -1472,9 +1472,9 @@ LUA_API int lua_addr (lua_State *L, int idx) {
   t = gettable(L, idx);
   val = luaA_addr(L, t, s2v(L->top.p - 1));
   L->top.p--;  /* remove key */
-  if (isempty(val))  /* avoid copying empty items to the stack */
+  if (isempty(val)) { /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));
-  else
+  } else
     setavalue(s2v(L->top.p), val);
   api_incr_top(L);
   lua_unlock(L);

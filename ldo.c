@@ -438,9 +438,9 @@ l_sinline void moveresults (lua_State *L, StkId res, int nres, int wanted) {
       L->top.p = res;
       return;
     case 1:  /* one value needed */
-      if (nres == 0)   /* no results? */
+      if (nres == 0) {   /* no results? */
         setnilvalue(s2v(res));  /* adjust with nil */
-      else  /* at least one result */
+      } else  /* at least one result */
         setobjs2s(L, res, L->top.p - nres);  /* move it to proper place */
       L->top.p = res + 1;
       return;
