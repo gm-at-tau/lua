@@ -47,12 +47,6 @@ static l_inline void luaA_free (lua_State *L, TValue *array, size_t size) {
 TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size) {
 	TValue *newarray;
 	size_t i = 0;
-	for (i = 0; i != oldsize; ++i) {
-		if (refcount(&array[i]) != 0)
-			goto lazyalloc;
-	}
-	return luaM_reallocvector(L, array, oldsize, size, TValue);
-lazyalloc:
 	newarray = luaM_newvector(L, size, TValue);
 	for (i = 0; i != oldsize; ++i) {
 		newarray[i] = array[i];
@@ -70,6 +64,7 @@ lazyalloc:
 
 lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
 	(void) L; // [] Check for metamethod
+	t->rc |= 1;
 	return (TValue *) luaH_get(t, key);
 }
 
