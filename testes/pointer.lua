@@ -40,6 +40,7 @@ end
 
 collectgarbage()
 assert(tostring(r) == tostring(s))
--- assert(r[nil] == "x")
+assert(r[nil] == "x")
+-- assert(f[nil] == "h")
 
 print "OK"

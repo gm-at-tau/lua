@@ -8,6 +8,7 @@
 
 LUAI_FUNC void luaA_init (lua_State *L);
 LUAI_FUNC TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size);
+LUAI_FUNC void luaA_free (lua_State *L, TValue *array, size_t size);
 
 LUAI_FUNC lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key);
 LUAI_FUNC lua_Ptr luaA_revive (lua_Ptr addr);
