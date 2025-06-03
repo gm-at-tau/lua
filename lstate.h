@@ -163,7 +163,7 @@ typedef struct stringtable {
 typedef struct lznode {
   TValue *mem;
   lu_byte rc;
-  size_t size;
+  unsigned int size; /* size of the array */
 } lznode;
 
 

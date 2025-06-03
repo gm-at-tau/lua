@@ -435,7 +435,7 @@ typedef struct TString {
 #define avalueraw(v)	((v).a)
 
 #define setavalue(obj,x) \
-  { TValue *io=(obj); if (x) refcount(x) |= 1; \
+  { TValue *io=(obj); if (x) refcount(x) |= 1u; \
 	val_(io).a=(x); settt_(io, LUA_VADDRESS); }
 
 
@@ -766,7 +766,7 @@ typedef struct Table {
   CommonHeader;
   lu_byte flags;  /* 1<<p means tagmethod(p) is not present */
   lu_byte lsizenode;  /* log2 of size of 'node' array */
-  lu_byte rc;
+  lu_byte rc;  /* caches if the array or hash part are references */
   unsigned int alimit;  /* "limit" of 'array' array */
   TValue *array;  /* array part */
   Node *node;
@@ -775,6 +775,8 @@ typedef struct Table {
   GCObject *gclist;
 } Table;
 
+#define hasref(t)	((t)->rc & 1u)
+#define setref(t)	((t)->rc |= 1u)
 
 /*
 ** Macros to manipulate keys inserted in nodes

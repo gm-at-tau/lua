@@ -49,7 +49,7 @@ void luaA_collect (lua_State *L) {
 }
 
 
-/* Should only be called if t->rc != 0 */
+/* Should only be called if hasref(t) */
 static inline void luaA_lzfree (lua_State *L, lznode node) {
 	lzarray *f = &G(L)->lzfree;
 	if (node.mem == NULL)
@@ -77,7 +77,7 @@ void luaA_freearray (lua_State *L, TValue *array, size_t size) {
 }
 
 
-/* Should only be called if t->rc != 0 */
+/* Should only be called if hasref(t) */
 TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size) {
 	TValue *newarray;
 	size_t i = 0;
@@ -104,7 +104,7 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t s
 /* Address of rawget(t, key) */
 lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
 	(void) L;
-	t->rc |= 1;
+	setref(t);
 	return (TValue *) luaH_get(t, key);
 }
 
