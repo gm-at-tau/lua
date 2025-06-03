@@ -7,6 +7,7 @@
 #ifndef lstate_h
 #define lstate_h
 
+#include "llimits.h"
 #include "lua.h"
 
 
@@ -161,6 +162,7 @@ typedef struct stringtable {
 
 typedef struct lznode {
   TValue *mem;
+  lu_byte rc;
   size_t size;
 } lznode;
 

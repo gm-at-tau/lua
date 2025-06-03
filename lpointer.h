@@ -7,6 +7,8 @@
 #include "lua.h"
 
 LUAI_FUNC void luaA_init (lua_State *L);
+LUAI_FUNC void luaA_collect (lua_State *L);
+
 LUAI_FUNC TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size);
 LUAI_FUNC void luaA_freearray (lua_State *L, TValue *array, size_t size);
 

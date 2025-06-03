@@ -282,6 +282,7 @@ static void close_state (lua_State *L) {
   for (size_t i = 0; i != g->lzfree.nitems; ++i)
     if (g->lzfree.array[i].mem != NULL)
       luaM_freearray(L, g->lzfree.array[i].mem, g->lzfree.array[i].size);
+  g->lzfree.nitems = 0;
   luaM_freearray(L, g->lzfree.array, g->lzfree.size);
   freestack(L);
   lua_assert(gettotalbytes(g) == sizeof(LG));

@@ -1639,6 +1639,7 @@ static lu_mem singlestep (lua_State *L) {
         g->gcstate = GCSpause;  /* finish collection */
         work = 0;
       }
+      luaA_collect(L);
       break;
     }
     default: lua_assert(0); return 0;
