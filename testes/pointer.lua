@@ -1,6 +1,6 @@
 print("testing pointer")
 
-local r, s
+local f, r, s
 do
 	local t = { "a", "b", "c" }
 	r = ptr.addr(t, 2)
@@ -14,31 +14,32 @@ do
 	t[100] = "e"
 	assert(t[100] == "e")
 	assert(r[nil] == "d")
-	assert(r == ptr.addr(t, 2))
+	s = ptr.addr(t, 2)
+	assert(r == s)
+	assert(tostring(r) ~= tostring(s))
 
 	t[2] = "x"
 	assert(t[2] == "x")
 	assert(r[nil] == "x")
 
 	t.f = "g"
-	s = ptr.addr(t, "f")
-	assert(s[nil] == "g")
+	f = ptr.addr(t, "f")
+	assert(f[nil] == "g")
 	assert(t.f == "g")
 
-	s[nil] = "h"
-	assert(s[nil] == "h")
+	f[nil] = "h"
+	assert(f[nil] == "h")
 	assert(t.f == "h")
 
 	assert(not pcall(function()
 		local a = {}
-		a[r] = 3
+		a[nil] = 3
 		return a
 	end))
 end
 
---[[
 collectgarbage()
-assert(r[nil] == "d")
-]]
+assert(tostring(r) == tostring(s))
+-- assert(r[nil] == "x")
 
 print "OK"

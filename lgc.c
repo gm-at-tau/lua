@@ -21,6 +21,7 @@
 #include "lgc.h"
 #include "lmem.h"
 #include "lobject.h"
+#include "lpointer.h"
 #include "lstate.h"
 #include "lstring.h"
 #include "ltable.h"
@@ -90,11 +91,13 @@
 */
 #define gcvalueN(o)     (iscollectable(o) ? gcvalue(o) : NULL)
 
-
 #define markvalue(g,o) { checkliveness(g->mainthread,o); \
-  if (valiswhite(o)) reallymarkobject(g,gcvalue(o)); }
+  if (valiswhite(o)) reallymarkobject(g, gcvalue(o)); \
+  if (ttisaddress(o)) val_(o).a = luaA_revive(val_(o).a); }
 
-#define markkey(g, n)	{ if keyiswhite(n) reallymarkobject(g,gckey(n)); }
+#define markkey(g, n) { \
+  if keyiswhite(n) reallymarkobject(g, gckey(n)); \
+  if (keyisaddress(n)) keyval(n).a = luaA_revive(keyval(n).a);  }
 
 #define markobject(g,t)	{ if (iswhite(t)) reallymarkobject(g, obj2gco(t)); }
 

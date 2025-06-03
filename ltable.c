@@ -172,8 +172,7 @@ static Node *mainpositionTV (const Table *t, const TValue *key) {
     case LUA_VTRUE:
       return hashboolean(t, 1);
     case LUA_VADDRESS: case LUA_VFWDADDRESS: {
-      const TValue *a = avalue(key);
-      lua_assert(!ttisforward(a));
+      lua_Ptr a = luaA_revive(avalue(key));
       return hashpointer(t, a);
     }
     case LUA_VLIGHTUSERDATA: {

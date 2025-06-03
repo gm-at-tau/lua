@@ -787,6 +787,7 @@ typedef struct Table {
 #define keyival(node)		(keyval(node).i)
 #define keyisshrstr(node)	(keytt(node) == ctb(LUA_VSHRSTR))
 #define keystrval(node)		(gco2ts(keyval(node).gc))
+#define keyisaddress(node)	(keytt(node) == LUA_TADDRESS)
 
 #define setnilkey(node)		(keytt(node) = LUA_TNIL)
 

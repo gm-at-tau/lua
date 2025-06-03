@@ -74,8 +74,7 @@ lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
 }
 
 
-lua_Ptr luaA_revive (lua_State *L, lua_Ptr ptr) {
-	(void) L;
+lua_Ptr luaA_revive (lua_Ptr ptr) {
 	while (ttisforward(ptr))
 		ptr = avalue(ptr);
 	lua_assert(refcount(ptr) != 0);
@@ -83,13 +82,14 @@ lua_Ptr luaA_revive (lua_State *L, lua_Ptr ptr) {
 }
 
 const TValue *luaA_deref (lua_State *L, TValue *addr) {
-	lua_Ptr ptr = luaA_revive(L, avalue(addr));
+	lua_Ptr ptr = luaA_revive(avalue(addr));
+	(void) L;
 	setavalue(addr, ptr);
 	return ptr;
 }
 
 const TValue *luaA_assign (lua_State *L, TValue *addr, const TValue *val) {
-	lua_Ptr ptr = luaA_revive(L, avalue(addr));
+	lua_Ptr ptr = luaA_revive(avalue(addr));
 	setavalue(addr, ptr);
 	setobj(L, ptr, val);
 	return val;
