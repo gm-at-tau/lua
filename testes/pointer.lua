@@ -14,6 +14,7 @@ do
 	t[100] = "e"
 	assert(t[100] == "e")
 	assert(r[nil] == "d")
+	assert(r == ptr.addr(t, 2))
 
 	t[2] = "x"
 	assert(t[2] == "x")
@@ -27,6 +28,12 @@ do
 	s[nil] = "h"
 	assert(s[nil] == "h")
 	assert(t.f == "h")
+
+	assert(not pcall(function()
+		local a = {}
+		a[r] = 3
+		return a
+	end))
 end
 
 --[[

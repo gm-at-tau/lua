@@ -5,7 +5,6 @@
 #include "lprefix.h"
 
 #include <stddef.h>
-#include <string.h>
 
 #include "llimits.h"
 #include "lua.h"
@@ -19,11 +18,15 @@
 
 void luaA_init (lua_State *L) {
 	freetable *f = &G(L)->freetbl;
+	size_t i = 0;
 	f->array = luaM_newvector(L, MINSTRTABSIZE, freenode);
 	lua_assert(f->array != NULL);
 	f->size = MINSTRTABSIZE;
 	f->nitems = 0;
-	memset(f->array, 0, MINSTRTABSIZE * sizeof(freenode));
+	for (i = 0; i != MINSTRTABSIZE; ++i) {
+		f->array[i].mem = NULL;
+		f->array[i].size = 0;
+	}
 }
 
 
@@ -44,6 +47,7 @@ static l_inline void luaA_free (lua_State *L, TValue *array, size_t size) {
 }
 
 
+/* Should only be called if t->rc != 0 */
 TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size) {
 	TValue *newarray;
 	size_t i = 0;
@@ -62,8 +66,9 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t s
 }
 
 
+/* Address of rawget(t, key) */
 lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
-	(void) L; // [] Check for metamethod
+	(void) L;
 	t->rc |= 1;
 	return (TValue *) luaH_get(t, key);
 }

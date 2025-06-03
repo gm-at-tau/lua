@@ -171,10 +171,9 @@ static Node *mainpositionTV (const Table *t, const TValue *key) {
       return hashboolean(t, 0);
     case LUA_VTRUE:
       return hashboolean(t, 1);
-    case LUA_VADDRESS: {
+    case LUA_VADDRESS: case LUA_VFWDADDRESS: {
       const TValue *a = avalue(key);
       lua_assert(!ttisforward(a));
-      /* May invalidate */
       return hashpointer(t, a);
     }
     case LUA_VLIGHTUSERDATA: {
@@ -231,7 +230,7 @@ static int equalkey (const TValue *k1, const Node *n2, int deadok) {
       return (ivalue(k1) == keyival(n2));
     case LUA_VNUMFLT:
       return luai_numeq(fltvalue(k1), fltvalueraw(keyval(n2)));
-    case LUA_VADDRESS:
+    case LUA_VADDRESS: case LUA_VFWDADDRESS:
       return avalue(k1) == avalueraw(keyval(n2));
     case LUA_VLIGHTUSERDATA:
       return pvalue(k1) == pvalueraw(keyval(n2));
@@ -682,6 +681,8 @@ static void luaH_newkey (lua_State *L, Table *t, const TValue *key,
   TValue aux;
   if (l_unlikely(ttisnil(key)))
     luaG_runerror(L, "table index is nil");
+  else if (l_unlikely(ttisaddress(key)))
+    luaG_runerror(L, "table index is address");
   else if (ttisfloat(key)) {
     lua_Number f = fltvalue(key);
     lua_Integer k;
