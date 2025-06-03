@@ -33,7 +33,7 @@ do
 
 	assert(not pcall(function()
 		local a = {}
-		a[nil] = 3
+		a[r] = 3
 		return a
 	end))
 end

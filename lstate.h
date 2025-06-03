@@ -159,17 +159,17 @@ typedef struct stringtable {
 } stringtable;
 
 
-typedef struct freenode {
+typedef struct lznode {
   TValue *mem;
   size_t size;
-} freenode;
+} lznode;
 
 
-typedef struct freetable {
-  freenode *array;
+typedef struct lzarray {
+  lznode *array;
   size_t nitems;
   size_t size;
-} freetable;
+} lzarray;
 
 
 /*
@@ -272,7 +272,7 @@ typedef struct global_State {
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
   stringtable strt;  /* hash table for strings */
-  freetable freetbl;  /* table for "free" arrays which may references alive */
+  lzarray lzfree;  /* list for "free" arrays which may references alive */
   TValue l_registry;
   TValue nilvalue;  /* a nil value */
   unsigned int seed;  /* randomized seed for hashes */

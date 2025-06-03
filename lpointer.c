@@ -16,16 +16,16 @@
 #include "lstate.h"
 #include "ltable.h"
 
-#define MINFREETABSIZE ((MINSTRTABSIZE < 4) ? 4 : MINSTRTABSIZE)
+#define MINLZTABSIZE ((MINSTRTABSIZE < 4) ? 4 : MINSTRTABSIZE)
 
 void luaA_init (lua_State *L) {
-	freetable *f = &G(L)->freetbl;
+	lzarray *f = &G(L)->lzfree;
 	size_t i = 0;
-	f->array = luaM_newvector(L, MINFREETABSIZE , freenode);
+	f->array = luaM_newvector(L, MINLZTABSIZE , lznode);
 	lua_assert(f->array != NULL);
-	f->size = MINFREETABSIZE;
+	f->size = MINLZTABSIZE;
 	f->nitems = 0;
-	for (i = 0; i != MINFREETABSIZE; ++i) {
+	for (i = 0; i != MINLZTABSIZE; ++i) {
 		f->array[i].mem = NULL;
 		f->array[i].size = 0;
 	}
@@ -33,8 +33,8 @@ void luaA_init (lua_State *L) {
 
 
 /* Should only be called if t->rc != 0 */
-void luaA_free (lua_State *L, TValue *array, size_t size) {
-	freetable *f = &G(L)->freetbl;
+static inline void luaA_lzfree (lua_State *L, TValue *array, size_t size) {
+	lzarray *f = &G(L)->lzfree;
 	if (array == NULL)
 		return;
 	else if (f->nitems >= f->size) {
@@ -42,13 +42,18 @@ void luaA_free (lua_State *L, TValue *array, size_t size) {
 		lua_assert(newsize >= 4);
 		while (f->nitems >= newsize)
 			newsize = (newsize / 2) * 3;
-		f->array = luaM_reallocvector(L, f->array, f->size, newsize, freenode);
+		f->array = luaM_reallocvector(L, f->array, f->size, newsize, lznode);
 		lua_assert(f->array != NULL);
 		f->size = newsize;
 	}
 	f->array[f->nitems].mem = array;
 	f->array[f->nitems].size = size;
 	f->nitems += 1;
+}
+
+
+void luaA_freearray (lua_State *L, TValue *array, size_t size) {
+	luaA_lzfree(L, array, size);
 }
 
 
@@ -66,7 +71,7 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t s
 			settt_(&array[i], LUA_VFWDADDRESS);
 		}
 	}
-	luaA_free(L, array, oldsize);
+	luaA_lzfree(L, array, oldsize);
 	return newarray;
 }
 

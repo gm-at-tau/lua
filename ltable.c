@@ -653,7 +653,7 @@ void luaH_free (lua_State *L, Table *t) {
   if (t->rc == 0)
     luaM_freearray(L, t->array, asize);
   else
-    luaA_free(L, t->array, asize);
+    luaA_freearray(L, t->array, asize);
   luaM_free(L, t);
 }
 
