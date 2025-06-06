@@ -13,6 +13,7 @@
 #include <string.h>
 
 
+#include "llimits.h"
 #include "lua.h"
 
 #include "ldebug.h"
@@ -93,11 +94,9 @@
 
 #define markvalue(g,o) { checkliveness(g->mainthread,o); \
   if (valiswhite(o)) reallymarkobject(g, gcvalue(o)); \
-  if (ttisaddress(o)) val_(o).a = luaA_revive(val_(o).a); }
+  if (ttisaddress(o)) markaddress(g, o); }
 
-#define markkey(g, n) { \
-  if keyiswhite(n) reallymarkobject(g, gckey(n)); \
-  if (keyisaddress(n)) keyval(n).a = luaA_revive(keyval(n).a);  }
+#define markkey(g, n) { if keyiswhite(n) reallymarkobject(g, gckey(n)); }
 
 #define markobject(g,t)	{ if (iswhite(t)) reallymarkobject(g, obj2gco(t)); }
 
@@ -110,6 +109,7 @@
 static void reallymarkobject (global_State *g, GCObject *o);
 static lu_mem atomic (lua_State *L);
 static void entersweep (lua_State *L);
+static void markaddress(global_State *g, TValue *o);
 
 
 /*
@@ -313,6 +313,12 @@ static void reallymarkobject (global_State *g, GCObject *o) {
       markvalue(g, uv->v.p);  /* mark its content */
       break;
     }
+    case LUA_VBOX: {
+      GCBox *b = gco2b(o);
+      markvalue(g, boxedvalue(b));
+      set2black(b);
+      break;
+    }
     case LUA_VUSERDATA: {
       Udata *u = gco2u(o);
       if (u->nuvalue == 0) {  /* no user values? */
@@ -393,6 +399,14 @@ static int remarkupvals (global_State *g) {
   return work;
 }
 
+static void markaddress(global_State *g, TValue *o) {
+  const TValue *v = luaA_deref(o); /* revives the pointer */
+  lua_assert(reftype(v) & BIT_REF);
+  if (reftype(v) & BIT_BOX) {
+    GCBox *b = intobox(v);
+    markobject(g, obj2gco(b));
+  }
+}
 
 static void cleargraylists (global_State *g) {
   g->gray = g->grayagain = NULL;
@@ -799,6 +813,10 @@ static void freeobj (lua_State *L, GCObject *o) {
     case LUA_VUSERDATA: {
       Udata *u = gco2u(o);
       luaM_freemem(L, o, sizeudata(u->nuvalue, u->len));
+      break;
+    }
+    case LUA_VBOX: {
+      luaM_freemem(L, o, sizeof(GCBox));
       break;
     }
     case LUA_VSHRSTR: {

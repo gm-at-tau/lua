@@ -162,7 +162,6 @@ typedef struct stringtable {
 
 typedef struct lznode {
   TValue *mem;
-  lu_byte rc;
   unsigned int size; /* size of the array */
 } lznode;
 
@@ -370,6 +369,7 @@ union GCUnion {
   GCObject gc;  /* common header */
   struct TString ts;
   struct Udata u;
+  struct GCBox b;
   union Closure cl;
   struct Table h;
   struct Proto p;
@@ -389,6 +389,7 @@ union GCUnion {
 #define gco2ts(o)  \
 	check_exp(novariant((o)->tt) == LUA_TSTRING, &((cast_u(o))->ts))
 #define gco2u(o)  check_exp((o)->tt == LUA_VUSERDATA, &((cast_u(o))->u))
+#define gco2b(o)  check_exp((o)->tt == LUA_VBOX, &((cast_u(o))->b))
 #define gco2lcl(o)  check_exp((o)->tt == LUA_VLCL, &((cast_u(o))->cl.l))
 #define gco2ccl(o)  check_exp((o)->tt == LUA_VCCL, &((cast_u(o))->cl.c))
 #define gco2cl(o)  \

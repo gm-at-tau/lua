@@ -1485,7 +1485,7 @@ LUA_API int lua_addr (lua_State *L, int idx) {
 LUA_API void lua_deref (lua_State *L, int idx) {
   const TValue *addr;
   lua_lock(L);
-  addr = luaA_deref(L, index2value(L, idx));
+  addr = luaA_deref(index2value(L, idx));
   setobj2s(L, L->top.p, addr);
   api_incr_top(L);
   lua_unlock(L);

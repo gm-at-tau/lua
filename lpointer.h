@@ -14,7 +14,7 @@ LUAI_FUNC void luaA_freearray (lua_State *L, TValue *array, size_t size);
 
 LUAI_FUNC lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key);
 LUAI_FUNC lua_Ptr luaA_revive (lua_Ptr addr);
-LUAI_FUNC const TValue *luaA_deref (lua_State *L, lua_Ptr addr);
+LUAI_FUNC const TValue *luaA_deref (lua_Ptr addr);
 LUAI_FUNC const TValue *luaA_assign (lua_State *L, TValue *addr, const TValue *val);
 
 #endif

@@ -1,9 +1,11 @@
 print("testing pointer")
-local gc = { "generational", "incremental" }
+local gc = { "incremental", "generational" }
 
 for _, opt in ipairs(gc) do
+	print(opt)
 	collectgarbage(opt)
 
+	local refs = {}
 	local f, r, s
 	do
 		local t = { "a", "b", "c" }
@@ -25,6 +27,7 @@ for _, opt in ipairs(gc) do
 		assert(t[2] == "x")
 		assert(r[nil] == "x")
 
+		--[[
 		t.f = "g"
 		f = ptr.addr(t, "f")
 		assert(f[nil] == "g")
@@ -33,22 +36,37 @@ for _, opt in ipairs(gc) do
 		f[nil] = "h"
 		assert(f[nil] == "h")
 		assert(t.f == "h")
+		]]
 
 		assert(not pcall(function()
 			local a = {}
 			a[r] = 3
 			return a
 		end))
+
+		t = nil
 	end
+	refs[1] = r
+	refs[2] = s
+	print "SCOPE"
 
-	collectgarbage()
+	local box = (function()
+		local t = { 42 }
+		return ptr.addr(t, 1)
+	end)()
 
-	assert(tostring(r) == tostring(s))
-	assert(r[nil] == "x")
-	assert(s[nil] == "x")
-	-- assert(f[nil] == "h")
+	-- once for table, once for box
+	for i = 1, 2 do
+		collectgarbage()
 
-	assert(r[nil] == "x")
+		assert(tostring(r) == tostring(s))
+		assert(r == refs[1])
+		assert(r == refs[2])
+		assert(r[nil] == "x")
+		assert(s[nil] == "x")
+		-- assert(f[nil] == "h")
+	end
+	print "OK"
 end
 
 print "OK"

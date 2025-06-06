@@ -20,6 +20,7 @@
 #include "lobject.h"
 #include "lstate.h"
 #include "lstring.h"
+#include "lgc.h"
 
 
 /*
@@ -270,5 +271,16 @@ Udata *luaS_newudata (lua_State *L, size_t s, int nuvalue) {
   for (i = 0; i < nuvalue; i++)
     setnilvalue(&u->uv[i].uv);
   return u;
+}
+
+GCBox *luaS_newbox (lua_State *L, const TValue *value) {
+  GCObject *o = luaC_newobj(L, LUA_VBOX, sizeof(GCBox));
+  GCBox *b = gco2b(o);
+  TValue *v = boxedvalue(b);
+  o->marked = bitmask(BLACKBIT); /* make alive this cycle */
+  setobj(L, v, value);
+  reftype(v) = BIT_REF | BIT_BOX;
+  lua_assert(b == intobox(v));
+  return b;
 }
 

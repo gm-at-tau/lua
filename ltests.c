@@ -494,6 +494,10 @@ static void checkrefs (global_State *g, GCObject *o) {
       assert(!isgray(o));  /* strings are never gray */
       break;
     }
+    case LUA_VBOX: {
+      checkvalref(g, o, boxedvalue(gco2b(o)));
+      break;
+    }
     default: assert(0);
   }
 }
