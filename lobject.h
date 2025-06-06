@@ -766,7 +766,7 @@ typedef struct Table {
   CommonHeader;
   lu_byte flags;  /* 1<<p means tagmethod(p) is not present */
   lu_byte lsizenode;  /* log2 of size of 'node' array */
-  lu_byte rc;  /* caches if the array or hash part are references */
+  unsigned int rc;  /* caches if the array or hash part are referenced */
   unsigned int alimit;  /* "limit" of 'array' array */
   TValue *array;  /* array part */
   Node *node;
@@ -775,8 +775,8 @@ typedef struct Table {
   GCObject *gclist;
 } Table;
 
-#define hasref(t)	((t)->rc & 1u)
-#define setref(t)	((t)->rc |= 1u)
+#define anyref(t)	((t)->rc != 0)
+#define incref(t)	((t)->rc += 1u)
 
 /*
 ** Macros to manipulate keys inserted in nodes

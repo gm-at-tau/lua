@@ -40,16 +40,16 @@ void luaA_collect (lua_State *L) {
 	}
 
 	for (i = j = 0; i != f->nitems; ++i) {
-		if (f->array[i].rc == 0)
-			luaM_freearray(L, f->array[i].mem, f->array[i].size);
-		else
+		if (f->array[i].rc)
 			f->array[j++] = f->array[i];
+		else
+			luaM_freearray(L, f->array[i].mem, f->array[i].size);
 	}
 	f->nitems = j;
 }
 
 
-/* Should only be called if hasref(t) */
+/* Should only be called if anyref(t) */
 static inline void luaA_lzfree (lua_State *L, lznode node) {
 	lzarray *f = &G(L)->lzfree;
 	if (node.mem == NULL)
@@ -77,7 +77,7 @@ void luaA_freearray (lua_State *L, TValue *array, size_t size) {
 }
 
 
-/* Should only be called if hasref(t) */
+/* Should only be called if anyref(t) */
 TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size) {
 	TValue *newarray;
 	size_t i = 0;
@@ -89,11 +89,11 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t s
 	newarray = luaM_newvector(L, size, TValue);
 	for (i = 0; i != oldsize; ++i) {
 		newarray[i] = array[i];
-		if (refcount(&array[i]) == 0) {
-			setempty(&array[i]);
-		} else {
+		if (refcount(&array[i])) {
 			setavalue(&array[i], &newarray[i]);
 			settt_(&array[i], LUA_VFWDADDRESS);
+		} else {
+			setempty(&array[i]);
 		}
 	}
 	luaA_lzfree(L, node);
@@ -103,9 +103,11 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t s
 
 /* Address of rawget(t, key) */
 lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
+	lua_Ptr ptr = (TValue *) luaH_get(t, key);
 	(void) L;
-	setref(t);
-	return (TValue *) luaH_get(t, key);
+	if (!isempty(ptr) && !refcount(ptr))
+		incref(t);
+	return ptr;
 }
 
 

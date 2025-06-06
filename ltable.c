@@ -577,7 +577,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
     exchangehashpart(t, &newt);  /* and hash (in case of errors) */
   }
   /* allocate new array */
-  if (hasref(t))
+  if (anyref(t))
     newarray = luaA_reallocarray(L, t->array, oldasize, newasize);
   else
     newarray = luaM_reallocvector(L, t->array, oldasize, newasize, TValue);
@@ -650,7 +650,7 @@ Table *luaH_new (lua_State *L) {
 void luaH_free (lua_State *L, Table *t) {
   size_t asize = luaH_realasize(t);
   freehash(L, t);
-  if (hasref(t))
+  if (anyref(t))
     luaA_freearray(L, t->array, asize);
   else
     luaM_freearray(L, t->array, asize);

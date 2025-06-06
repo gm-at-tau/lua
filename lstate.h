@@ -274,7 +274,7 @@ typedef struct global_State {
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
   stringtable strt;  /* hash table for strings */
-  lzarray lzfree;  /* list for "free" arrays which may references alive */
+  lzarray lzfree;  /* list for "free" arrays which may alive references */
   TValue l_registry;
   TValue nilvalue;  /* a nil value */
   unsigned int seed;  /* randomized seed for hashes */
