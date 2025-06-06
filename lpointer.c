@@ -29,16 +29,15 @@ void luaA_init (lua_State *L) {
 void luaA_collect (lua_State *L) {
 	lzarray *f = &G(L)->lzfree;
 	size_t i, j;
-	StkId p;
-
-	for (p = L->stack.p; p != L->stack_last.p; ++p) {
-		TValue *addr = s2v(p);
-		if (ttisaddress(addr)) {
-			lua_Ptr ptr = luaA_revive(avalue(addr));
-			setavalue(addr, ptr);
+	StkId p = L->stack.p;
+	if (p != NULL)
+		for (; p != L->stack_last.p; ++p) {
+			TValue *addr = s2v(p);
+			if (ttisaddress(addr)) {
+				lua_Ptr ptr = luaA_revive(avalue(addr));
+				setavalue(addr, ptr);
+			}
 		}
-	}
-
 	for (i = j = 0; i != f->nitems; ++i) {
 		if (f->array[i].rc)
 			f->array[j++] = f->array[i];
