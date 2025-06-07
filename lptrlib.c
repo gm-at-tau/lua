@@ -21,6 +21,15 @@
 #include "lualib.h"
 
 
+static int pointer_rawaddr (lua_State *L) {
+  lua_Integer key;
+  luaL_checktype(L, 1, LUA_TTABLE);
+  key = luaL_checkinteger(L, 2);
+  lua_rawaddr(L, 1, key);
+  return 1;
+}
+
+
 static int pointer_addr (lua_State *L) {
   lua_Integer key;
   luaL_checktype(L, 1, LUA_TTABLE);
@@ -79,6 +88,7 @@ static const luaL_Reg pointer_metamethods[] = {
 
 
 static const luaL_Reg pointer_functions[] = {
+  {"rawaddr", pointer_rawaddr},
   {"addr", pointer_addr},
   {"deref", pointer_deref},
   {"assign", pointer_assign},

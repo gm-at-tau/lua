@@ -55,4 +55,14 @@ for _, opt in ipairs(gc) do
 	assert(box[nil] == 42)
 end
 
+print "TM"
+local tm = {}
+function tm.__addr(t, i)
+	return ptr.rawaddr(t, i + 1)
+end
+
+local t = setmetatable({ "x", "y", "z" }, tm)
+local r = ptr.addr(t, 1)
+assert(r[nil] == "y")
+
 print "OK"
