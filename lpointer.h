@@ -1,4 +1,10 @@
-//
+/*
+** $Id: lpointer.h $
+** LZ Pointer
+** Copyright (C) 2025 Gabriel Domingues <gm@mail.tau.ac.il>
+** See LUA Copyright Notice in lua.h
+*/
+
 #ifndef lpointer_h
 #define lpointer_h
 
