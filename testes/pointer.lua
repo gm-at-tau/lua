@@ -6,7 +6,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage(opt)
 
 	local refs = {}
-	local f, r, s
+	local r, s
 	do
 		local t = { "a", "b", "c" }
 		r = ptr.addr(t, 2)
@@ -27,11 +27,8 @@ for _, opt in ipairs(gc) do
 		assert(t[2] == "x")
 		assert(r[nil] == "x")
 
-		assert(not pcall(function()
-			local a = {}
-			a[r] = 3
-			return a
-		end))
+		assert(not pcall(rawset, t, r, 3))
+		assert(not pcall(ptr.addr, t, "f"))
 
 		t = nil
 	end
@@ -45,7 +42,7 @@ for _, opt in ipairs(gc) do
 	end)()
 
 	-- once for table, once for box
-	for i = 1, 2 do
+	for _ = 1, 3 do
 		collectgarbage()
 
 		assert(tostring(r) == tostring(s))
@@ -54,7 +51,8 @@ for _, opt in ipairs(gc) do
 		assert(r[nil] == "x")
 		assert(s[nil] == "x")
 	end
-	print "OK"
+
+	assert(box[nil] == 42)
 end
 
 print "OK"

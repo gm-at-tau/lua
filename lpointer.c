@@ -135,9 +135,8 @@ const TValue *luaA_deref (TValue *addr) {
 }
 
 
-const TValue *luaA_assign (lua_State *L, TValue *addr, const TValue *val) {
+void luaA_assign (lua_State *L, TValue *addr, const TValue *val) {
   lua_Ptr ptr = luaA_revive(avalue(addr));
   setavalue(addr, ptr);
   setobj(L, ptr, val);
-  return val;
 }
