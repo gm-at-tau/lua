@@ -16,9 +16,10 @@
 
 
 static int pointer_addr (lua_State *L) {
+	lua_Integer key;
 	luaL_checktype(L, 1, LUA_TTABLE);
-	lua_settop(L, 2); /* create a 2nd argument if there isn't one */
-	lua_addr(L, 1);
+	key = luaL_checkinteger(L, 2);
+	lua_addr(L, 1, key);
 	return 1;
 }
 

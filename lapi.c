@@ -1464,13 +1464,13 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
 }
 
 
-LUA_API int lua_addr (lua_State *L, int idx) {
+LUA_API int lua_addr (lua_State *L, int idx, lua_Integer key) {
   Table *t;
   lua_Ptr val;
   lua_lock(L);
-  api_checknelems(L, 2);
+  api_checknelems(L, 1);
   t = gettable(L, idx);
-  val = luaA_addr(L, t, s2v(L->top.p - 1));
+  val = luaA_addr(L, t, key);
   L->top.p--;  /* remove key */
   if (isempty(val)) { /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));

@@ -96,7 +96,7 @@
   if (valiswhite(o)) reallymarkobject(g, gcvalue(o)); \
   if (ttisaddress(o)) markaddress(g, o); }
 
-#define markkey(g, n) { if keyiswhite(n) reallymarkobject(g, gckey(n)); }
+#define markkey(g, n)	{ if keyiswhite(n) reallymarkobject(g,gckey(n)); }
 
 #define markobject(g,t)	{ if (iswhite(t)) reallymarkobject(g, obj2gco(t)); }
 

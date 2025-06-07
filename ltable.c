@@ -593,7 +593,6 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
      setempty(&t->array[i]);
   /* re-insert elements from old hash part into new parts */
   reinsert(L, &newt, t);  /* 'newt' now has the old hash */
-  // [] Maybe do not free
   freehash(L, &newt);  /* free old hash part */
 }
 
@@ -760,7 +759,7 @@ static void luaH_newkey (lua_State *L, Table *t, const TValue *key,
 ** If key is 0 or negative, 'res' will have its higher bit on, so that
 ** if cannot be smaller than alimit.
 */
-const TValue *luaH_getint (Table *t, lua_Integer key) {
+const TValue *luaH_getarray (Table *t, lua_Integer key) {
   lua_Unsigned alimit = t->alimit;
   if (l_castS2U(key) - 1u < alimit)  /* 'key' in [1, t->alimit]? */
     return &t->array[key - 1];
@@ -769,6 +768,15 @@ const TValue *luaH_getint (Table *t, lua_Integer key) {
     t->alimit = cast_uint(key);  /* probably '#t' is here now */
     return &t->array[key - 1];
   }
+  else /* key is not in the array part; check the hash */
+    return &absentkey;
+}
+
+
+const TValue *luaH_getint (Table *t, lua_Integer key) {
+  const TValue *array = luaH_getarray(t, key);
+  if (!isabstkey(array))
+    return array;
   else {  /* key is not in the array part; check the hash */
     Node *n = hashint(t, key);
     for (;;) {  /* check whether 'key' is somewhere in the chain */

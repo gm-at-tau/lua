@@ -27,17 +27,6 @@ for _, opt in ipairs(gc) do
 		assert(t[2] == "x")
 		assert(r[nil] == "x")
 
-		--[[
-		t.f = "g"
-		f = ptr.addr(t, "f")
-		assert(f[nil] == "g")
-		assert(t.f == "g")
-
-		f[nil] = "h"
-		assert(f[nil] == "h")
-		assert(t.f == "h")
-		]]
-
 		assert(not pcall(function()
 			local a = {}
 			a[r] = 3
@@ -64,7 +53,6 @@ for _, opt in ipairs(gc) do
 		assert(r == refs[2])
 		assert(r[nil] == "x")
 		assert(s[nil] == "x")
-		-- assert(f[nil] == "h")
 	end
 	print "OK"
 end
