@@ -78,12 +78,13 @@ static inline void luaA_lzfree (lua_State *L, TValue *array, size_t size) {
 void luaA_freearray (lua_State *L, TValue *array, size_t size) {
   size_t i = 0;
   for (i = 0; i != size; ++i) {
-    if (reftype(&array[i]) & BIT_REF) {
-      GCBox *box = luaS_newbox(L, &array[i]);
-      setavalue(&array[i], boxedvalue(box));
-      settt_(&array[i], LUA_VFWDADDRESS);
+    TValue *v = &array[i];
+    if (isref(v) && isdead(G(L), v)) {
+      GCBox *box = luaS_newbox(L, v);
+      setavalue(v, boxedvalue(box));
+      settt_(v, LUA_VFWDADDRESS);
     } else {
-      setempty(&array[i]);
+      setempty(v);
     }
   }
   luaA_lzfree(L, array, size);
@@ -95,12 +96,13 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t s
   TValue *newarray = luaM_newvector(L, size, TValue);
   size_t i = 0;
   for (i = 0; i != oldsize; ++i) {
+    TValue *v = &array[i];
     newarray[i] = array[i];
-    if (reftype(&array[i]) & BIT_REF) {
-      setavalue(&array[i], &newarray[i]);
-      settt_(&array[i], LUA_VFWDADDRESS);
+    if (isref(v)) {
+      setavalue(v, &newarray[i]);
+      settt_(v, LUA_VFWDADDRESS);
     } else {
-      setempty(&array[i]);
+      setempty(v);
     }
   }
   luaA_lzfree(L, array, oldsize);
@@ -114,7 +116,7 @@ lua_Ptr luaA_addr (lua_State *L, Table *t, lua_Integer key) {
   UNUSED(L);
   if (isempty(ptr))
     return ptr;
-  if (!(reftype(ptr) & BIT_REF))
+  if (!isref(ptr))
     incref(t);
   return ptr;
 }
@@ -123,7 +125,7 @@ lua_Ptr luaA_addr (lua_State *L, Table *t, lua_Integer key) {
 lua_Ptr luaA_revive (lua_Ptr ptr) {
   while (ttisforward(ptr))
     ptr = avalue(ptr);
-  lua_assert(reftype(ptr) & BIT_REF);
+  lua_assert(isref(ptr));
   return ptr;
 }
 

@@ -64,7 +64,7 @@ typedef union Value {
 ** an actual value plus a tag with its type.
 */
 
-#define TValuefields	Value value_; lu_byte tt_; lu_byte rt_
+#define TValuefields	Value value_; lu_byte tt_; lu_byte marked
 
 typedef struct TValue {
   TValuefields;
@@ -73,10 +73,14 @@ typedef struct TValue {
 
 #define val_(o)		((o)->value_)
 #define valraw(o)	(val_(o))
-#define reftype(v)	((v)->rt_)
 
 #define BIT_REF		(1u << 0)
 #define BIT_BOX		(1u << 1)
+
+#define setref(o)	((o)->marked |= BIT_REF)
+#define isref(o)	((o)->marked & BIT_REF)
+#define isboxed(o)	((o)->marked & BIT_BOX)
+#define mark_(o)	((o)->marked)
 
 
 /* raw type tag of a TValue */
@@ -204,7 +208,7 @@ typedef union {
 
 
 #define setnilvalue(obj) \
-	{ TValue * io = (obj); reftype(io) = 0; settt_(io, LUA_VNIL); }
+	{ TValue * io = (obj); mark_(io) = 0; settt_(io, LUA_VNIL); }
 
 
 #define isabstkey(v)		checktag((v), LUA_VABSTKEY)
@@ -230,7 +234,7 @@ typedef union {
 
 /* mark an entry as empty */
 #define setempty(obj) \
-	{ TValue * io = (obj); reftype(io) = 0; settt_(io, LUA_VEMPTY); }
+	{ TValue * io = (obj); mark_(io) = 0; settt_(io, LUA_VEMPTY); }
 
 
 
@@ -440,7 +444,7 @@ typedef struct TString {
 #define avalueraw(v)	((v).a)
 
 #define setavalue(obj,x) \
-  { TValue *io=(obj); if (x) reftype(x) |= BIT_REF; \
+  { TValue *io=(obj); if (x) setref(x); \
 	val_(io).a=(x); settt_(io, LUA_VADDRESS); }
 
 
@@ -451,7 +455,7 @@ typedef struct GCBox {
 
 #define boxedvalue(o)	(&(o)->box)
 #define reinterpretbox(o)	((GCBox *)((char *)o - offsetof(GCBox, box)))
-#define intobox(o)	check_exp(reftype(o) & BIT_BOX, reinterpretbox(o))
+#define intobox(o)	check_exp(isboxed(o), reinterpretbox(o))
 
 
 /* }================================================================== */

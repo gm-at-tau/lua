@@ -61,14 +61,29 @@ end
 
 collectgarbage()
 
-print "TM"
-local tm = {}
-function tm.__addr(t, i)
-	return ptr.rawaddr(t, i + 1)
+do
+	print "TM"
+	local tm = {}
+	function tm.__addr(t, i)
+		return ptr.rawaddr(t, i + 1)
+	end
+
+	local t = setmetatable({ "x", "y", "z" }, tm)
+	local r = ptr.addr(t, 1)
+	assert(r[nil] == "y")
+	collectgarbage()
 end
 
-local t = setmetatable({ "x", "y", "z" }, tm)
-local r = ptr.addr(t, 1)
-assert(r[nil] == "y")
+collectgarbage()
+
+do
+	local t = { 0 }
+	local r = ptr.addr(t, 1)
+	t[1] = r
+	collectgarbage()
+end
+
+collectgarbage()
+
 
 print "OK"

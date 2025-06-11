@@ -278,8 +278,8 @@ GCBox *luaS_newbox (lua_State *L, const TValue *value) {
   GCBox *b = gco2b(o);
   TValue *v = boxedvalue(b);
   o->marked = bitmask(BLACKBIT); /* make alive this cycle */
-  setobj(L, v, value);
-  reftype(v) = BIT_REF | BIT_BOX;
+  *v = *value;
+  mark_(v) |= BIT_BOX | BIT_REF;
   lua_assert(b == intobox(v));
   return b;
 }
