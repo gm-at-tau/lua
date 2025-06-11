@@ -402,6 +402,7 @@ static int remarkupvals (global_State *g) {
 static void markaddress(global_State *g, TValue *o) {
   const TValue *v = luaA_deref(o); /* revives the pointer */
   lua_assert(reftype(v) & BIT_REF);
+  markvalue(g, cast(TValue *, v));
   if (reftype(v) & BIT_BOX) {
     GCBox *b = intobox(v);
     markobject(g, obj2gco(b));

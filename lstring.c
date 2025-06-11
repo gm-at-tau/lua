@@ -283,4 +283,3 @@ GCBox *luaS_newbox (lua_State *L, const TValue *value) {
   lua_assert(b == intobox(v));
   return b;
 }
-

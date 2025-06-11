@@ -2,14 +2,17 @@ print("testing pointer")
 local gc = { "incremental", "generational" }
 
 for _, opt in ipairs(gc) do
+	collectgarbage()
 	print(opt)
 	collectgarbage(opt)
+	collectgarbage()
 
 	local refs = {}
 	local r, s
 	do
 		local t = { "a", "b", "c" }
 		r = ptr.addr(t, 2)
+		assert(type(r) == "pointer")
 		assert(tostring(r) == string.format("pointer: %p", r))
 		assert(r[nil] == "b")
 
@@ -37,7 +40,7 @@ for _, opt in ipairs(gc) do
 	print "SCOPE"
 
 	local box = (function()
-		local t = { 42 }
+		local t = { { "box of box" } }
 		return ptr.addr(t, 1)
 	end)()
 
@@ -52,8 +55,11 @@ for _, opt in ipairs(gc) do
 		assert(s[nil] == "x")
 	end
 
-	assert(box[nil] == 42)
+	assert(type(box[nil]) == "table")
+	assert(box[nil][1] == "box of box")
 end
+
+collectgarbage()
 
 print "TM"
 local tm = {}
