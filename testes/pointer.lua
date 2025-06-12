@@ -34,6 +34,7 @@ for _, opt in ipairs(gc) do
 		assert(not pcall(ptr.addr, t, "f"))
 
 		t = nil
+		ptr.addr(t, 1) -- unused
 	end
 	refs[1] = r
 	refs[2] = s

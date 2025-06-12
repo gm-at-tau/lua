@@ -76,10 +76,11 @@ static inline void luaA_lzfree (lua_State *L, TValue *array, size_t size) {
 
 
 void luaA_freearray (lua_State *L, TValue *array, size_t size) {
+  lu_byte white = otherwhite(G(L)); /* called after atomic(L) */
   size_t i = 0;
   for (i = 0; i != size; ++i) {
     TValue *v = &array[i];
-    if (isref(v) && isdead(G(L), v)) {
+    if (isref(v) && isdeadm(white, v->marked)) {
       GCBox *box = luaS_newbox(L, v);
       setavalue(v, boxedvalue(box));
       settt_(v, LUA_VFWDADDRESS);
