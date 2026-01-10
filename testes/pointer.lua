@@ -14,21 +14,22 @@ for _, opt in ipairs(gc) do
 		r = @t[2]
 		assert(type(r) == "pointer")
 		assert(tostring(r) == string.format("pointer: %p", r))
-		assert(r[nil] == "b")
+		assert(r[] == "b")
 
-		r[nil] = "d"
+		r[] = "d"
+		assert(r[] == "d")
 		assert(r[nil] == "d")
 		assert(t[2] == "d")
 
 		t[100] = "e"
 		assert(t[100] == "e")
-		assert(r[nil] == "d")
+		assert(r[] == "d")
 		s = ptr.addr(t, 2) -- @t[2]
 		assert(r == s)
 
 		t[2] = "x"
 		assert(t[2] == "x")
-		assert(r[nil] == "x")
+		assert(r[] == "x")
 
 		assert(not pcall(rawset, t, r, 3))
 		assert(not pcall(ptr.addr, t, "f"))
@@ -53,12 +54,12 @@ for _, opt in ipairs(gc) do
 		assert(tostring(r) == tostring(s))
 		assert(r == refs[1])
 		assert(r == refs[2])
-		assert(r[nil] == "x")
-		assert(s[nil] == "x")
+		assert(r[] == "x")
+		assert(s[] == "x")
 	end
 
-	assert(type(box[nil]) == "table")
-	assert(box[nil][1] == "box of box")
+	assert(type(box[]) == "table")
+	assert(box[][1] == "box of box")
 end
 
 collectgarbage()
@@ -72,7 +73,7 @@ do
 
 	local t = setmetatable({ "x", "y", "z" }, tm)
 	local r = @t[1]
-	assert(r[nil] == "y")
+	assert(r[] == "y")
 	collectgarbage()
 end
 

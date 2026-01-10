@@ -820,9 +820,18 @@ static void fieldsel (LexState *ls, expdesc *v) {
 
 
 static void yindex (LexState *ls, expdesc *v) {
-  /* index -> '[' expr ']' */
+  /* index -> '[' ']' | '[' expr ']' */
   luaX_next(ls);  /* skip the '[' */
-  expr(ls, v);
+  switch(ls->t.token) {
+    case ']': {
+      init_exp(v, VNIL, 0);
+      break;
+    }
+    default: {
+      expr(ls, v);
+      break;
+    }
+  }
   luaK_exp2val(ls->fs, v);
   checknext(ls, ']');
 }
