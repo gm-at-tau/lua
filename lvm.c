@@ -281,6 +281,28 @@ static int floatforloop (StkId ra) {
     return 0;  /* finish the loop */
 }
 
+static void luaV_address (lua_State *L, const TValue *t, const TValue *key,
+		          StkId val) {
+  const TValue *tm;
+  lua_assert(ttistable(t));
+  tm = fasttm(L, hvalue(t)->metatable, TM_ADDR);
+  if (tm != NULL && !ttisnil(tm)) {
+    lua_assert(ttisfunction(tm));
+    luaT_callTMres(L, tm, t, key, val);  /* call it */
+  }
+  else {
+    lua_Ptr addr;
+    lua_Integer n = 0;
+    if (!tointeger(key, &n))
+	lua_assert(false);
+    addr = luaA_addr(L, hvalue(t), n);
+    if (isempty(addr)) { /* avoid copying empty items to the stack */
+      setnilvalue(s2v(val));
+    } else {
+      setavalue(s2v(val), addr);
+    }
+  }
+}
 
 /*
 ** Finish the table access 'val = t[key]'.
@@ -825,6 +847,7 @@ void luaV_finishOp (lua_State *L) {
       break;
     }
     case OP_UNM: case OP_BNOT: case OP_LEN:
+    case OP_ADDRESS:
     case OP_GETTABUP: case OP_GETTABLE: case OP_GETI:
     case OP_GETFIELD: case OP_SELF: {
       setobjs2s(L, base + GETARG_A(inst), --L->top.p);
@@ -1303,6 +1326,13 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
         }
         else
           Protect(luaV_finishget(L, rb, rc, ra, slot));
+        vmbreak;
+      }
+      vmcase(OP_ADDRESS) {
+        StkId ra = RA(i);
+        TValue *rb = vRB(i);
+        TValue *rc = vRC(i);
+        Protect(luaV_address(L, rb, rc, ra));
         vmbreak;
       }
       vmcase(OP_SETTABUP) {

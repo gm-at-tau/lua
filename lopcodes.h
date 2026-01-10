@@ -215,6 +215,8 @@ OP_GETTABLE,/*	A B C	R[A] := R[B][R[C]]				*/
 OP_GETI,/*	A B C	R[A] := R[B][C]					*/
 OP_GETFIELD,/*	A B C	R[A] := R[B][K[C]:shortstring]			*/
 
+OP_ADDRESS,/*	A B C	R[A] := @R[B][R[C]]				*/
+
 OP_SETTABUP,/*	A B C	UpValue[A][K[B]:shortstring] := RK(C)		*/
 OP_SETTABLE,/*	A B C	R[A][R[B]] := RK(C)				*/
 OP_SETI,/*	A B C	R[A][B] := RK(C)				*/

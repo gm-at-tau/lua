@@ -809,6 +809,12 @@ void luaK_dischargevars (FuncState *fs, expdesc *e) {
       e->k = VRELOC;
       break;
     }
+    case VADDRESSED: {
+      freeregs(fs, e->u.ind.t, e->u.ind.idx);
+      e->u.info = luaK_codeABC(fs, OP_ADDRESS, 0, e->u.ind.t, e->u.ind.idx);
+      e->k = VRELOC;
+      break;
+    }
     case VVARARG: case VCALL: {
       luaK_setoneret(fs, e);
       break;
@@ -1308,6 +1314,16 @@ void luaK_indexed (FuncState *fs, expdesc *t, expdesc *k) {
   }
 }
 
+void luaK_addressed (FuncState *fs, expdesc *t, expdesc *k) {
+  lua_assert(!hasjumps(t) &&
+             (t->k == VLOCAL || t->k == VNONRELOC || t->k == VUPVAL));
+  if (t->k == VUPVAL)
+    luaK_exp2anyreg(fs, t);
+  /* register index of the table */
+  t->u.ind.t = (t->k == VLOCAL) ? t->u.var.ridx : t->u.info;
+  t->u.ind.idx = luaK_exp2anyreg(fs, k);  /* register */
+  t->k = VADDRESSED;
+}
 
 /*
 ** Return false if folding can raise an error.

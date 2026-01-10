@@ -11,7 +11,7 @@ for _, opt in ipairs(gc) do
 	local r, s
 	do
 		local t = { "a", "b", "c" }
-		r = ptr.addr(t, 2)
+		r = @t[2]
 		assert(type(r) == "pointer")
 		assert(tostring(r) == string.format("pointer: %p", r))
 		assert(r[nil] == "b")
@@ -23,7 +23,7 @@ for _, opt in ipairs(gc) do
 		t[100] = "e"
 		assert(t[100] == "e")
 		assert(r[nil] == "d")
-		s = ptr.addr(t, 2)
+		s = ptr.addr(t, 2) -- @t[2]
 		assert(r == s)
 
 		t[2] = "x"
@@ -33,8 +33,8 @@ for _, opt in ipairs(gc) do
 		assert(not pcall(rawset, t, r, 3))
 		assert(not pcall(ptr.addr, t, "f"))
 
-		t = nil
-		ptr.addr(t, 1) -- unused
+		-- t = nil
+		-- ptr.addr(t, 1) -- unused
 	end
 	refs[1] = r
 	refs[2] = s
@@ -42,7 +42,7 @@ for _, opt in ipairs(gc) do
 
 	local box = (function()
 		local t = { { "box of box" } }
-		return ptr.addr(t, 1)
+		return @t[1]
 	end)()
 
 	-- once for table, once for box
@@ -70,7 +70,7 @@ do
 	end
 
 	local t = setmetatable({ "x", "y", "z" }, tm)
-	local r = ptr.addr(t, 1)
+	local r = @t[1]
 	assert(r[nil] == "y")
 	collectgarbage()
 end
@@ -79,7 +79,7 @@ collectgarbage()
 
 do
 	local t = { 0 }
-	local r = ptr.addr(t, 1)
+	local r = @t[1]
 	t[1] = r
 	collectgarbage()
 end

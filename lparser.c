@@ -1100,6 +1100,25 @@ static void primaryexp (LexState *ls, expdesc *v) {
 }
 
 
+static void indexedexp (LexState *ls, expdesc *v) {
+  /* indexedexp -> primaryexp '[' exp ']' */
+  FuncState *fs = ls->fs;
+  primaryexp(ls, v);
+  switch (ls->t.token) {
+    case '[': {  /* '[' exp ']' */
+      expdesc key;
+      luaK_exp2anyregup(fs, v);
+      yindex(ls, &key);
+      luaK_addressed(fs, v, &key);
+      break;
+    }
+    default: {
+      error_expected(ls, '[');
+    }
+  }
+}
+
+
 static void suffixedexp (LexState *ls, expdesc *v) {
   /* suffixedexp ->
        primaryexp { '.' NAME | '[' exp ']' | ':' NAME funcargs | funcargs } */
@@ -1139,7 +1158,7 @@ static void suffixedexp (LexState *ls, expdesc *v) {
 
 static void simpleexp (LexState *ls, expdesc *v) {
   /* simpleexp -> FLT | INT | STRING | NIL | TRUE | FALSE | ... |
-                  constructor | FUNCTION body | suffixedexp */
+                  constructor | FUNCTION body | ADDR indexedexp | suffixedexp */
   switch (ls->t.token) {
     case TK_FLT: {
       init_exp(v, VKFLT, 0);
@@ -1176,6 +1195,11 @@ static void simpleexp (LexState *ls, expdesc *v) {
     }
     case '{': {  /* constructor */
       constructor(ls, v);
+      return;
+    }
+    case TK_ADDR: {
+      luaX_next(ls);
+      indexedexp(ls, v);
       return;
     }
     case TK_FUNCTION: {

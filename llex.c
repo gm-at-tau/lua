@@ -536,6 +536,10 @@ static int llex (LexState *ls, SemInfo *seminfo) {
       case EOZ: {
         return TK_EOS;
       }
+      case '@': {
+        next(ls);
+        return TK_ADDR;
+      }
       default: {
         if (lislalpha(ls->current)) {  /* identifier or reserved word? */
           TString *ts;

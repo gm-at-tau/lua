@@ -591,6 +591,11 @@ static const char *getobjname (const Proto *p, int lastpc, int reg,
         kname(p, k, name);
         return isEnv(p, lastpc, i, 0);
       }
+      case OP_ADDRESS: {
+        int k = GETARG_C(i);  /* key index */
+        rname(p, lastpc, k, name);
+        return isEnv(p, lastpc, i, 0);
+      }
       case OP_SELF: {
         rkname(p, lastpc, i, name);
         return "method";
@@ -621,6 +626,9 @@ static const char *funcnamefromcode (lua_State *L, const Proto *p,
        return "for iterator";
     }
     /* other instructions can do calls through metamethods */
+    case OP_ADDRESS:
+      tm = TM_ADDR;
+      break;
     case OP_SELF: case OP_GETTABUP: case OP_GETTABLE:
     case OP_GETI: case OP_GETFIELD:
       tm = TM_INDEX;

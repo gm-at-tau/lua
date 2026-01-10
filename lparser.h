@@ -52,6 +52,9 @@ typedef enum {
   VINDEXSTR, /* indexed variable with literal string;
                 ind.t = table register;
                 ind.idx = key's K index */
+  VADDRESSED,  /* addressed variable;
+                ind.t = table register;
+                ind.idx = key's R index */
   VJMP,  /* expression is a test/comparison;
             info = pc of corresponding jump instruction */
   VRELOC,  /* expression can put result in any register;
