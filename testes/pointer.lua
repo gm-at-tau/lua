@@ -33,8 +33,9 @@ for _, opt in ipairs(gc) do
 		assert(not pcall(rawset, t, r, 3))
 		assert(not pcall(ptr.addr, t, "f"))
 
-		-- t = nil
-		-- ptr.addr(t, 1) -- unused
+		assert(not pcall(function() return @t["a"] end))
+		t = nil
+		assert(not pcall(function() return @t[1] end))
 	end
 	refs[1] = r
 	refs[2] = s

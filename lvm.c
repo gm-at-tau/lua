@@ -281,10 +281,13 @@ static int floatforloop (StkId ra) {
     return 0;  /* finish the loop */
 }
 
-static void luaV_address (lua_State *L, const TValue *t, const TValue *key,
-		          StkId val) {
+void luaV_address (lua_State *L, const TValue *t, const TValue *key,
+		   StkId val) {
   const TValue *tm;
-  lua_assert(ttistable(t));
+  if (l_unlikely(!ttistable(t))) {
+    luaG_typeerror(L, t, "get a pointer for");
+    return;
+  }
   tm = fasttm(L, hvalue(t)->metatable, TM_ADDR);
   if (tm != NULL && !ttisnil(tm)) {
     lua_assert(ttisfunction(tm));
@@ -293,8 +296,10 @@ static void luaV_address (lua_State *L, const TValue *t, const TValue *key,
   else {
     lua_Ptr addr;
     lua_Integer n = 0;
-    if (!tointeger(key, &n))
-	lua_assert(false);
+    if (!tointeger(key, &n)) {
+      luaG_typeerror(L, key, "get a pointer at");
+      return;
+    }
     addr = luaA_addr(L, hvalue(t), n);
     if (isempty(addr)) { /* avoid copying empty items to the stack */
       setnilvalue(s2v(val));
