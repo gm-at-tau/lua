@@ -281,11 +281,14 @@ static void close_state (lua_State *L) {
     luai_userstateclose(L);
   }
   luaM_freearray(L, g->strt.hash, g->strt.size);
-  for (size_t i = 0; i != g->lzfree.nitems; ++i)
-    if (g->lzfree.array[i].mem != NULL)
-      luaM_freearray(L, g->lzfree.array[i].mem, g->lzfree.array[i].size);
-  g->lzfree.nitems = 0;
-  luaM_freearray(L, g->lzfree.array, g->lzfree.size);
+  { /* collect free arrays */
+    int i = 0;
+    for (i = 0; i != g->lzfree.n; ++i)
+      if (g->lzfree.arr[i].mem != NULL)
+        luaM_freearray(L, g->lzfree.arr[i].mem, g->lzfree.arr[i].size);
+    g->lzfree.n = 0;
+  }
+  luaM_freearray(L, g->lzfree.arr, g->lzfree.size);
   freestack(L);
   lua_assert(gettotalbytes(g) == sizeof(LG));
   (*g->frealloc)(g->ud, fromstate(L), sizeof(LG), 0);  /* free main block */
@@ -391,8 +394,8 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->gcstp = GCSTPGC;  /* no GC while building state */
   g->strt.size = g->strt.nuse = 0;
   g->strt.hash = NULL;
-  g->lzfree.size = g->lzfree.nitems = 0;
-  g->lzfree.array = NULL;
+  g->lzfree.size = g->lzfree.n = 0;
+  g->lzfree.arr = NULL;
   setnilvalue(&g->l_registry);
   g->panic = NULL;
   g->gcstate = GCSpause;

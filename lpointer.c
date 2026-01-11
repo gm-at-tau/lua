@@ -15,6 +15,7 @@
 #include "llimits.h"
 #include "lua.h"
 
+#include "ldo.h"
 #include "lgc.h"
 #include "lmem.h"
 #include "lobject.h"
@@ -24,21 +25,17 @@
 #include "ltable.h"
 
 
-#define MINLZTABSIZE ((MINSTRTABSIZE < 4) ? 4 : MINSTRTABSIZE)
-
-
 void luaA_init (lua_State *L) {
-  lzarray *f = &G(L)->lzfree;
-  f->array = luaM_newvector(L, MINLZTABSIZE, lznode);
-  lua_assert(f->array != NULL);
-  f->size = MINLZTABSIZE;
-  f->nitems = 0;
+  LZarray *f = &G(L)->lzfree;
+  f->arr = NULL;
+  f->size = 0;
+  f->n = 0;
 }
 
 
 void luaA_collect (lua_State *L) {
-  lzarray *f = &G(L)->lzfree;
-  size_t i = 0;
+  LZarray *f = &G(L)->lzfree;
+  int i = 0;
   StkId p = L->stack.p;
   if (p != NULL) {
     for (; p != L->stack_last.p; ++p) {
@@ -49,29 +46,22 @@ void luaA_collect (lua_State *L) {
       }
     }
   }
-  for (i = 0; i != f->nitems; ++i)
-    luaM_freearray(L, f->array[i].mem, f->array[i].size);
-  f->nitems = 0;
+  for (i = 0; i != f->n; ++i)
+    luaM_freearray(L, f->arr[i].mem, f->arr[i].size);
+  f->n = 0;
 }
 
 
 /* Should only be called if anyref(t) */
 static inline void luaA_lzfree (lua_State *L, TValue *array, size_t size) {
-  lzarray *f = &G(L)->lzfree;
+  LZarray *f = &G(L)->lzfree;
   if (array == NULL)
     return;
-  else if (f->nitems >= f->size) {
-    size_t newsize = f->size;
-    lua_assert(newsize >= 4);
-    while (f->nitems >= newsize)
-      newsize = (newsize / 2) * 3;
-    f->array = luaM_reallocvector(L, f->array, f->size, newsize, lznode);
-    lua_assert(f->array != NULL);
-    f->size = newsize;
-  }
-  f->array[f->nitems].mem = array;
-  f->array[f->nitems].size = size;
-  f->nitems += 1;
+  luaM_growvector(L, f->arr, f->n, f->size, LZnode,
+		  SHRT_MAX, "lazy free list");
+  f->arr[f->n].mem = array;
+  f->arr[f->n].size = size;
+  f->n += 1;
 }
 
 
