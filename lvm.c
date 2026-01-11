@@ -288,7 +288,7 @@ void luaV_address (lua_State *L, const TValue *t, const TValue *key,
     luaG_typeerror(L, t, "get a pointer for");
     return;
   }
-  tm = fasttm(L, hvalue(t)->metatable, TM_ADDR);
+  tm = luaT_gettmbyobj(L, t, TM_ADDR);
   if (tm != NULL && !ttisnil(tm)) {
     lua_assert(ttisfunction(tm));
     luaT_callTMres(L, tm, t, key, val);  /* call it */
