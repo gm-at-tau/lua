@@ -161,8 +161,8 @@ typedef struct stringtable {
 
 
 typedef struct LZnode {
-  TValue *mem;
-  unsigned int size; /* size of the array */
+  void *mem;
+  size_t size; /* size of the array */
 } LZnode;
 
 

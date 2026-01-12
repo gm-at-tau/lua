@@ -47,13 +47,12 @@ void luaA_collect (lua_State *L) {
     }
   }
   for (i = 0; i != f->n; ++i)
-    luaM_freearray(L, f->arr[i].mem, f->arr[i].size);
+    luaM_freemem(L, f->arr[i].mem, f->arr[i].size);
   f->n = 0;
 }
 
 
-/* Should only be called if anyref(t) */
-static inline void luaA_lzfree (lua_State *L, TValue *array, size_t size) {
+void luaA_freemem (lua_State *L, void *array, size_t size) {
   LZarray *f = &G(L)->lzfree;
   if (array == NULL)
     return;
@@ -64,39 +63,39 @@ static inline void luaA_lzfree (lua_State *L, TValue *array, size_t size) {
   f->n += 1;
 }
 
-
-void luaA_freearray (lua_State *L, TValue *array, size_t size) {
+void luaA_box (lua_State *L, TValue *value) {
   lu_byte white = otherwhite(G(L)); /* called after atomic(L) */
-  size_t i = 0;
-  for (i = 0; i != size; ++i) {
-    TValue *v = &array[i];
-    if (isref(v) && isdeadm(white, v->marked)) {
-      GCBox *box = luaS_newbox(L, v);
-      setavalue(v, boxedvalue(box));
-      settt_(v, LUA_VFWDADDRESS);
-    } else {
-      setempty(v);
-    }
-  }
-  luaA_lzfree(L, array, size);
+  if (isref(value) && isdeadm(white, value->marked)) {
+    GCBox *box = luaS_newbox(L, value);
+    setavalue(value, boxedvalue(box));
+    settt_(value, LUA_VFWDADDRESS);
+  } else
+    setempty(value);
 }
 
+void luaA_forward (TValue *value, TValue *newplace) {
+  if (isref(value)) {
+    setavalue(value, newplace);
+    settt_(value, LUA_VFWDADDRESS);
+  } else {
+    setempty(value);
+  }
+}
 
 /* Should only be called if anyref(t) */
-TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size) {
-  TValue *newarray = luaM_newvector(L, size, TValue);
-  size_t i = 0;
-  for (i = 0; i != oldsize; ++i) {
-    TValue *v = &array[i];
+TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize,
+                           size_t newsize) {
+  size_t i;
+  size_t n = (newsize < oldsize) ? newsize : oldsize;
+  TValue *newarray = luaM_newvector(L, newsize, TValue);
+  if (newarray == NULL && newsize > 0)
+    return NULL;
+  for (i = 0; i != n; ++i) {
+    TValue *value = &array[i];
     newarray[i] = array[i];
-    if (isref(v)) {
-      setavalue(v, &newarray[i]);
-      settt_(v, LUA_VFWDADDRESS);
-    } else {
-      setempty(v);
-    }
+    luaA_forward(value, &newarray[i]);
   }
-  luaA_lzfree(L, array, oldsize);
+  luaA_freearray(L, array, oldsize);
   return newarray;
 }
 

@@ -376,8 +376,18 @@ int luaH_next (lua_State *L, Table *t, StkId key) {
 
 
 static void freehash (lua_State *L, Table *t) {
-  if (!isdummy(t))
-    luaM_freearray(L, t->node, cast_sizet(sizenode(t)));
+  if (!isdummy(t)) {
+    unsigned int size = sizenode(t);
+    if (anyref(t)) {
+      unsigned int i;
+      for (i = 0; i < size; i++)
+        luaA_box(L, gval(gnode(t, i)));
+      luaA_freearray(L, t->node, cast_sizet(size));
+    }
+    else {
+      luaM_freearray(L, t->node, cast_sizet(size));
+    }
+  }
 }
 
 
@@ -525,6 +535,22 @@ static void reinsert (lua_State *L, Table *ot, Table *t) {
       luaH_set(L, t, &k, gval(old));
     }
   }
+  if (anyref(t)) {
+    for (j = 0; j < size; j++) {
+      Node *old = gnode(ot, j);
+      if (!isempty(gval(old))) {
+        TValue k;
+        getnodekey(L, &k, old);
+        if (isref(gval(old))) {
+          TValue *slot = cast(TValue *, luaH_get(t, &k));
+          lua_assert(!isabstkey(slot));
+          luaA_forward(gval(old), slot);
+        } else {
+          setnilvalue(gval(old));
+        }
+      }
+    }
+  }
 }
 
 
@@ -544,6 +570,28 @@ static void exchangehashpart (Table *t1, Table *t2) {
 }
 
 
+static int resizearray (lua_State *L, Table *t, unsigned int newsize) {
+  unsigned int i;
+  unsigned int oldsize = limitasasize(t);
+  TValue *newarray;
+  if (oldsize == newsize)
+    return 0;
+  /* allocate new array */
+  if (anyref(t))
+    newarray = luaA_reallocarray(L, t->array, oldsize, newsize);
+  else
+    newarray = luaM_reallocvector(L, t->array, oldsize, newsize, TValue);
+  if (l_unlikely(newarray == NULL && newsize > 0)) /* allocation failed? */
+    return 1;
+  for (i = oldsize; i < newsize; i++) { /* clear new slice of the array */
+    setempty(&newarray[i]);
+  }
+  t->alimit = newsize;
+  t->array = newarray;  /* set new array part */
+  return 0;
+}
+
+
 /*
 ** Resize table 't' for the new given sizes. Both allocations (for
 ** the hash part and for the array part) can fail, which creates some
@@ -558,13 +606,14 @@ static void exchangehashpart (Table *t1, Table *t2) {
 ** parts of the table.
 */
 void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
-                                          unsigned int nhsize) {
+                                          unsigned int newhsize) {
   unsigned int i;
   Table newt;  /* to keep the new hash part */
   unsigned int oldasize = setlimittosize(t);
-  TValue *newarray;
+  TValue *oldarray = t->array;
   /* create new hash part with appropriate size into 'newt' */
-  setnodevector(L, &newt, nhsize);
+  setnodevector(L, &newt, newhsize);
+  newt.rc = t->rc;
   if (newasize < oldasize) {  /* will array shrink? */
     t->alimit = newasize;  /* pretend array has new size... */
     exchangehashpart(t, &newt);  /* and new hash */
@@ -577,30 +626,43 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
     exchangehashpart(t, &newt);  /* and hash (in case of errors) */
   }
   /* allocate new array */
-  if (anyref(t))
-    newarray = luaA_reallocarray(L, t->array, oldasize, newasize);
-  else
-    newarray = luaM_reallocvector(L, t->array, oldasize, newasize, TValue);
-  if (l_unlikely(newarray == NULL && newasize > 0)) {  /* allocation failed? */
+  if (resizearray(L, t, newasize)) {
     freehash(L, &newt);  /* release new hash part */
     luaM_error(L);  /* raise error (with array unchanged) */
   }
   /* allocation ok; initialize new part of the array */
   exchangehashpart(t, &newt);  /* 't' has the new hash ('newt' has the old) */
-  t->array = newarray;  /* set new array part */
-  t->alimit = newasize;
-  for (i = oldasize; i < newasize; i++)  /* clear new slice of the array */
-     setempty(&t->array[i]);
+
   /* re-insert elements from old hash part into new parts */
   reinsert(L, &newt, t);  /* 'newt' now has the old hash */
+  if (anyref(t)) {
+    for (i = newasize; i < oldasize; i++) {
+      TValue *old = &oldarray[i];
+      if (isref(old)) {
+        TValue *slot = cast(TValue *, luaH_getint(t, i));
+        lua_assert(!isabstkey(slot));
+        luaA_forward(old, slot);
+      }
+      else {
+        setempty(old);
+      }
+    }
+  }
   freehash(L, &newt);  /* free old hash part */
 }
 
 
-void luaH_resizearray (lua_State *L, Table *t, unsigned int nasize) {
-  int nsize = allocsizenode(t);
-  luaH_resize(L, t, nasize, nsize);
+void luaH_resizearray (lua_State *L, Table *t, unsigned int newasize) {
+  unsigned int oldasize = setlimittosize(t);
+  if (newasize < oldasize) {
+    unsigned int hsize = allocsizenode(t);
+    luaH_resize(L, t, newasize, hsize);
+  }
+  else if (resizearray(L, t, newasize)) {
+    luaM_error(L);
+  }
 }
+
 
 /*
 ** nums[i] = number of keys 'k' where 2^(i - 1) < k <= 2^i
@@ -649,8 +711,12 @@ Table *luaH_new (lua_State *L) {
 void luaH_free (lua_State *L, Table *t) {
   size_t asize = luaH_realasize(t);
   freehash(L, t);
-  if (anyref(t))
+  if (anyref(t)) {
+    unsigned int i;
+    for (i = 0; i < asize; i++)
+      luaA_box(L, &t->array[i]);
     luaA_freearray(L, t->array, asize);
+  }
   else
     luaM_freearray(L, t->array, asize);
   luaM_free(L, t);
@@ -709,11 +775,12 @@ static void luaH_newkey (lua_State *L, Table *t, const TValue *key,
     }
     lua_assert(!isdummy(t));
     othern = mainpositionfromnode(t, mp);
-    if (othern != mp) {  /* is colliding node out of its main position? */
+    if (othern != mp && !isref(gval(othern))) {  /* is colliding node out of its main position? */
       /* yes; move colliding node into free position */
       while (othern + gnext(othern) != mp)  /* find previous */
         othern += gnext(othern);
       gnext(othern) = cast_int(f - othern);  /* rechain to point to 'f' */
+      /* guaranteed safe because the colliding node is not referenced */
       *f = *mp;  /* copy colliding node into free pos. (mp->next also goes) */
       if (gnext(mp) != 0) {
         gnext(f) += cast_int(mp - f);  /* correct 'next' */
@@ -830,6 +897,7 @@ const TValue *luaH_get (Table *t, const TValue *key) {
   switch (ttypetag(key)) {
     case LUA_VSHRSTR: return luaH_getshortstr(t, tsvalue(key));
     case LUA_VNUMINT: return luaH_getint(t, ivalue(key));
+    case LUA_VADDRESS: case LUA_VFWDADDRESS:
     case LUA_VNIL: return &absentkey;
     case LUA_VNUMFLT: {
       lua_Integer k;
