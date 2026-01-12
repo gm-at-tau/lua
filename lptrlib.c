@@ -14,6 +14,7 @@
 
 #include "lua.h"
 
+#include "lgc.h"
 #include "lapi.h"
 #include "lauxlib.h"
 #include "lobject.h"

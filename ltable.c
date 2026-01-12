@@ -44,7 +44,7 @@
 ** MAXABITS is the largest integer such that MAXASIZE fits in an
 ** unsigned int.
 */
-#define MAXABITS	cast_int(sizeof(int) * CHAR_BIT - 1)
+#define MAXABITS  cast_int(sizeof(int) * CHAR_BIT - 1)
 
 
 /*
@@ -52,13 +52,13 @@
 ** between 2^MAXABITS and the maximum size that, measured in bytes,
 ** fits in a 'size_t'.
 */
-#define MAXASIZE	luaM_limitN(1u << MAXABITS, TValue)
+#define MAXASIZE  luaM_limitN(1u << MAXABITS, TValue)
 
 /*
 ** MAXHBITS is the largest integer such that 2^MAXHBITS fits in a
 ** signed int.
 */
-#define MAXHBITS	(MAXABITS - 1)
+#define MAXHBITS  (MAXABITS - 1)
 
 
 /*
@@ -66,7 +66,7 @@
 ** between 2^MAXHBITS and the maximum size such that, measured in bytes,
 ** it fits in a 'size_t'.
 */
-#define MAXHSIZE	luaM_limitN(1u << MAXHBITS, Node)
+#define MAXHSIZE  luaM_limitN(1u << MAXHBITS, Node)
 
 
 /*
@@ -460,7 +460,7 @@ static unsigned int numusearray (const Table *t, unsigned int *nums) {
     }
     /* count elements in range (2^(lg - 1), 2^lg] */
     for (; i <= lim; i++) {
-      if (!isempty(&t->array[i-1]))
+      if (!isfree(&t->array[i-1]))
         lc++;
     }
     nums[lg] += lc;
@@ -476,7 +476,7 @@ static int numusehash (const Table *t, unsigned int *nums, unsigned int *pna) {
   int i = sizenode(t);
   while (i--) {
     Node *n = &t->node[i];
-    if (!isempty(gval(n))) {
+    if (!isfree(gval(n))) {
       if (keyisinteger(n))
         ause += countint(keyival(n), nums);
       totaluse++;
@@ -527,7 +527,7 @@ static void reinsert (lua_State *L, Table *ot, Table *t) {
   int size = sizenode(ot);
   for (j = 0; j < size; j++) {
     Node *old = gnode(ot, j);
-    if (!isempty(gval(old))) {
+    if (!isfree(gval(old))) {
       /* doesn't need barrier/invalidate cache, as entry was
          already present in the table */
       TValue k;
@@ -538,7 +538,7 @@ static void reinsert (lua_State *L, Table *ot, Table *t) {
   if (anyref(t)) {
     for (j = 0; j < size; j++) {
       Node *old = gnode(ot, j);
-      if (!isempty(gval(old))) {
+      if (!isfree(gval(old))) {
         TValue k;
         getnodekey(L, &k, old);
         if (isref(gval(old))) {
@@ -619,7 +619,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
     exchangehashpart(t, &newt);  /* and new hash */
     /* re-insert into the new hash the elements from vanishing slice */
     for (i = newasize; i < oldasize; i++) {
-      if (!isempty(&t->array[i]))
+      if (!isfree(&t->array[i]))
         luaH_setint(L, t, i + 1, &t->array[i]);
     }
     t->alimit = oldasize;  /* restore current size... */
@@ -761,10 +761,10 @@ static void luaH_newkey (lua_State *L, Table *t, const TValue *key,
     else if (l_unlikely(luai_numisnan(f)))
       luaG_runerror(L, "table index is NaN");
   }
-  if (ttisnil(value))
+  if (isfree(value))
     return;  /* do not insert nil values */
   mp = mainpositionTV(t, key);
-  if (!isempty(gval(mp)) || isdummy(t)) {  /* main position is taken? */
+  if (!isfree(gval(mp)) || isdummy(t)) {  /* main position is taken? */
     Node *othern;
     Node *f = getfreepos(t);  /* get a free place */
     if (f == NULL) {  /* cannot find a free place? */

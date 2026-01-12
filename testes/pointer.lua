@@ -100,33 +100,50 @@ for _, opt in ipairs(gc) do
 
 	assert(type(box[]) == "table")
 	assert(box[][1] == "box of box")
-end
 
-collectgarbage()
+	collectgarbage()
 
-do
-	print "TM"
-	local tm = {}
-	function tm.__addr(t, i)
-		return ptr.rawaddr(t, i + 1)
+	do
+		print "TM"
+		local tm = {}
+		function tm.__addr(t, i)
+			return ptr.rawaddr(t, i + 1)
+		end
+
+		local t = setmetatable({ 0xa, 0xb, 0xc }, tm)
+		local r = @t[1]
+		assert(r[] == 0xb)
+		collectgarbage()
 	end
 
-	local t = setmetatable({ 0xa, 0xb, 0xc }, tm)
-	local r = @t[1]
-	assert(r[] == 0xb)
 	collectgarbage()
-end
 
-collectgarbage()
+	do
+		local t = { 0 }
+		local r = @t[1]
+		t[1] = r
+		collectgarbage()
+	end
 
-do
-	local t = { 0 }
-	local r = @t[1]
-	t[1] = r
 	collectgarbage()
+
+	do
+		local t = { a = 0xa, b = 0xb, c = 0xc }
+		local r = @t["a"]
+		t.a = nil
+		collectgarbage()
+		t.d = 0xd
+		t.e = 0xe
+
+		t.a = 0x1a
+		local s = @t["a"]
+		assert(r == s)
+		assert(tostring(r) ~= tostring(s))
+		assert(r[] == 0x1a)
+	end
+
+	collectgarbage()
+
 end
-
-collectgarbage()
-
 
 print "OK"

@@ -226,6 +226,8 @@ typedef union {
 ** be accepted as empty.)
 */
 #define isempty(v)		ttisnil(v)
+#define isreallyempty(v)		checktag((o), LUA_VEMPTY)
+#define isfree(v)		(ttisnil(v) && !isref(v))
 
 
 /* macro defining a value corresponding to an absent key */

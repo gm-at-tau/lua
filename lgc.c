@@ -548,8 +548,14 @@ static void traversestrongtable (global_State *g, Table *h) {
   for (i = 0; i < asize; i++)  /* traverse array part */
     markvalue(g, &h->array[i]);
   for (n = gnode(h, 0); n < limit; n++) {  /* traverse hash part */
-    if (isempty(gval(n)))  /* entry is empty? */
-      clearkey(n);  /* clear its key */
+    if (isempty(gval(n))) {  /* entry is empty? */
+      if (isref(gval(n))) {
+        markkey(g, n);
+        markvalue(g, gval(n));
+      }
+      else
+        clearkey(n);  /* clear its key */
+    }
     else {
       lua_assert(!keyisnil(n));
       markkey(g, n);
