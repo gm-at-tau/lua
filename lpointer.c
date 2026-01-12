@@ -101,8 +101,8 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize,
 
 
 /* Address of rawget(t, key) */
-lua_Ptr luaA_addr (lua_State *L, Table *t, lua_Integer key) {
-  lua_Ptr ptr = (TValue *)luaH_getint(t, key);
+lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
+  lua_Ptr ptr = (TValue *)luaH_get(t, key);
   UNUSED(L);
   if (isempty(ptr))
     return ptr;

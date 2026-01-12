@@ -294,13 +294,7 @@ void luaV_address (lua_State *L, const TValue *t, const TValue *key,
     luaT_callTMres(L, tm, t, key, val);  /* call it */
   }
   else {
-    lua_Ptr addr;
-    lua_Integer n = 0;
-    if (!tointeger(key, &n)) {
-      luaG_typeerror(L, key, "get a pointer at");
-      return;
-    }
-    addr = luaA_addr(L, hvalue(t), n);
+    lua_Ptr addr = luaA_addr(L, hvalue(t), key);
     if (isempty(addr)) { /* avoid copying empty items to the stack */
       setnilvalue(s2v(val));
     } else {

@@ -18,11 +18,12 @@ LUAI_FUNC void luaA_collect (lua_State *L);
 LUAI_FUNC void luaA_freemem (lua_State *L, void *array, size_t size);
 LUAI_FUNC void luaA_box (lua_State *L, TValue *value);
 LUAI_FUNC void luaA_forward (TValue *value, TValue *newplace);
-LUAI_FUNC TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize, size_t size);
+LUAI_FUNC TValue *luaA_reallocarray (lua_State *L, TValue *array,
+                                     size_t oldsize, size_t size);
 
 #define luaA_freearray(L, b, n)   luaA_freemem(L, (b), (n)*sizeof(*(b)))
 
-LUAI_FUNC lua_Ptr luaA_addr (lua_State *L, Table *t, lua_Integer key);
+LUAI_FUNC lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue* key);
 LUAI_FUNC lua_Ptr luaA_revive (lua_Ptr addr);
 LUAI_FUNC const TValue *luaA_deref (lua_Ptr addr);
 LUAI_FUNC void luaA_assign (lua_State *L, TValue *addr, const TValue *val);

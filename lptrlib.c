@@ -16,25 +16,22 @@
 
 #include "lapi.h"
 #include "lauxlib.h"
-#include "lgc.h"
 #include "lobject.h"
 #include "lualib.h"
 
 
 static int pointer_rawaddr (lua_State *L) {
-  lua_Integer key;
   luaL_checktype(L, 1, LUA_TTABLE);
-  key = luaL_checkinteger(L, 2);
-  lua_rawaddr(L, 1, key);
+  lua_settop(L, 2);
+  lua_rawaddr(L, 1);
   return 1;
 }
 
 
 static int pointer_addr (lua_State *L) {
-  lua_Integer key;
   luaL_checktype(L, 1, LUA_TTABLE);
-  key = luaL_checkinteger(L, 2);
-  lua_addr(L, 1, key);
+  lua_settop(L, 2);
+  lua_addr(L, 1);
   return 1;
 }
 

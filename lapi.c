@@ -1463,13 +1463,13 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
   luaC_objbarrier(L, f1, *up1);
 }
 
-LUA_API int lua_rawaddr (lua_State *L, int idx, lua_Integer key) {
+LUA_API int lua_rawaddr (lua_State *L, int idx) {
   Table *t;
   lua_Ptr val;
   lua_lock(L);
   api_checknelems(L, 1);
   t = gettable(L, idx);
-  val = luaA_addr(L, t, key);
+  val = luaA_addr(L, t, s2v(L->top.p - 1));
   L->top.p--;  /* remove key */
   if (isempty(val)) { /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));
@@ -1481,22 +1481,20 @@ LUA_API int lua_rawaddr (lua_State *L, int idx, lua_Integer key) {
   return ttype(s2v(L->top.p - 1));
 }
 
-LUA_API int lua_addr (lua_State *L, int idx, lua_Integer key) {
+LUA_API int lua_addr (lua_State *L, int idx) {
   const TValue *tm, *t;
   t = index2value(L, idx);
   api_check(L, ttistable(t), "table expected");
   tm = luaT_gettmbyobj(L, t, TM_ADDR);
   if (tm != NULL && !ttisnil(tm)) {
-    TValue aux;
-    setivalue(&aux, key);
     lua_assert(ttisfunction(tm));
     lua_lock(L);
-    luaT_callTMres(L, tm, t, &aux, L->top.p);
+    luaT_callTMres(L, tm, t, s2v(L->top.p - 1), L->top.p);
     api_incr_top(L);
     lua_unlock(L);
     return ttype(s2v(L->top.p - 1));
   }
-  return lua_rawaddr(L, idx, key);
+  return lua_rawaddr(L, idx);
 }
 
 
