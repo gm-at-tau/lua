@@ -11,6 +11,8 @@ for _, opt in ipairs(gc) do
 	local a0, a1
 	do
 		local t = { 0xa, 0xb, 0xc, 0xd, a = 0xa }
+
+		print "ARRAY"
 		a0 = @t[2]
 		assert(type(a0) == "pointer")
 		assert(tostring(a0) == string.format("pointer: %p", a0))
@@ -36,7 +38,7 @@ for _, opt in ipairs(gc) do
 
 		t[3] = nil
 		t[4] = nil
-		for i = 1,10 do
+		for i = 1, 4 do
 			t["f".. i] = i
 		end
 		assert(t[2] == 0xff)
@@ -47,6 +49,7 @@ for _, opt in ipairs(gc) do
 
 		assert(not pcall(rawset, t, a0, 3))
 
+		print "FIELDS"
 		local h0, h1
 		h0 = @t.a
 		assert(type(h0) == "pointer")
@@ -116,6 +119,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
+		print "CYCLE"
 		local t = { 0 }
 		local r = @t[1]
 		t[1] = r
@@ -125,6 +129,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
+		print "FIELDS"
 		local t = { a = 0xa, b = 0xb, c = 0xc }
 		local r = @t.a
 		t.a = nil

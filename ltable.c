@@ -378,15 +378,10 @@ int luaH_next (lua_State *L, Table *t, StkId key) {
 static void freehash (lua_State *L, Table *t) {
   if (!isdummy(t)) {
     unsigned int size = sizenode(t);
-    if (anyref(t)) {
-      unsigned int i;
-      for (i = 0; i < size; i++)
-        luaA_box(L, gval(gnode(t, i)));
+    if (anyref(t))
       luaA_freearray(L, t->node, cast_sizet(size));
-    }
-    else {
+    else
       luaM_freearray(L, t->node, cast_sizet(size));
-    }
   }
 }
 
@@ -541,7 +536,7 @@ static void reinsert (lua_State *L, Table *ot, Table *t) {
 static void forward (lua_State *L, Table *ot, Table *t) {
   int i;
   int hsize = sizenode(ot);
-  int asize = limitasasize(t);
+  int asize = limitasasize(ot);
   for (i = 0; i < hsize; i++) {
     Node *old = gnode(ot, i);
     if (!isfree(gval(old))) {
@@ -640,7 +635,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
     exchangehashpart(t, &newt);  /* and new hash */
     /* re-insert into the new hash the elements from vanishing slice */
     for (i = newasize; i < oldasize; i++) {
-      if (!isfree(&t->array[i]))
+      if (!isempty(&t->array[i]))
         luaH_setint(L, t, i + 1, &t->array[i]);
     }
     t->alimit = oldasize;  /* restore current size... */
@@ -721,15 +716,20 @@ Table *luaH_new (lua_State *L) {
 
 void luaH_free (lua_State *L, Table *t) {
   size_t asize = luaH_realasize(t);
-  freehash(L, t);
   if (anyref(t)) {
     unsigned int i;
     for (i = 0; i < asize; i++)
       luaA_box(L, &t->array[i]);
     luaA_freearray(L, t->array, asize);
+    if (!isdummy(t)) {
+      size_t hsize = sizenode(t);
+      for (i = 0; i < hsize; i++)
+        luaA_box(L, gval(gnode(t, i)));
+    }
   }
   else
     luaM_freearray(L, t->array, asize);
+  freehash(L, t);
   luaM_free(L, t);
 }
 
@@ -786,7 +786,7 @@ static void luaH_newkey (lua_State *L, Table *t, const TValue *key,
     }
     lua_assert(!isdummy(t));
     othern = mainpositionfromnode(t, mp);
-    if (othern != mp && !isref(gval(othern))) {  /* is colliding node out of its main position? */
+    if (othern != mp && !isref(gval(mp))) {  /* is colliding node out of its main position? */
       /* yes; move colliding node into free position */
       while (othern + gnext(othern) != mp)  /* find previous */
         othern += gnext(othern);
