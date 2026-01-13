@@ -1109,10 +1109,18 @@ static void primaryexp (LexState *ls, expdesc *v) {
 
 
 static void indexedexp (LexState *ls, expdesc *v) {
-  /* indexedexp -> primaryexp '[' exp ']' */
+  /* indexedexp -> primaryexp ( '.' NAME | '[' exp ']' ) */
   FuncState *fs = ls->fs;
   primaryexp(ls, v);
   switch (ls->t.token) {
+    case '.': {  /* '.' NAME */
+      expdesc key;
+      luaK_exp2anyregup(fs, v);
+      luaX_next(ls);
+      codename(ls, &key);
+      luaK_addressed(fs, v, &key);
+      break;
+    }
     case '[': {  /* '[' exp ']' */
       expdesc key;
       luaK_exp2anyregup(fs, v);
@@ -1120,9 +1128,7 @@ static void indexedexp (LexState *ls, expdesc *v) {
       luaK_addressed(fs, v, &key);
       break;
     }
-    default: {
-      error_expected(ls, '[');
-    }
+    default: luaX_syntaxerror(ls, "'.' or '[' expected");
   }
 }
 

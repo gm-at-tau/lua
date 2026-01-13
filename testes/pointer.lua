@@ -45,10 +45,10 @@ for _, opt in ipairs(gc) do
 		a1 = @t[2]
 		assert(a0 == a1)
 
-		-- assert(not pcall(rawset, t, r, 3))
+		assert(not pcall(rawset, t, a0, 3))
 
 		local h0, h1
-		h0 = @t["a"]
+		h0 = @t.a
 		assert(type(h0) == "pointer")
 		assert(tostring(h0) == string.format("pointer: %p", h0))
 		assert(h0[] == 0xa)
@@ -64,16 +64,13 @@ for _, opt in ipairs(gc) do
 		t.e = 0x1e
 		assert(t.e == 0x1e)
 		assert(h0[] == 0x1a)
-		h1 = ptr.addr(t, "a") -- @t["a"]
+		h1 = ptr.addr(t, "a") -- @t.a
 		assert(h0 == h1)
 
 		t.a = 0xa
 		assert(t.a == 0xa)
 		assert(h0[] == 0xa)
 
-		-- assert(not pcall(ptr.addr, t, "f"))
-
-		-- assert(not pcall(function() return @t["a"] end))
 		t = nil
 		assert(not pcall(function() return @t[1] end))
 	end
@@ -129,14 +126,14 @@ for _, opt in ipairs(gc) do
 
 	do
 		local t = { a = 0xa, b = 0xb, c = 0xc }
-		local r = @t["a"]
+		local r = @t.a
 		t.a = nil
 		collectgarbage()
 		t.d = 0xd
 		t.e = 0xe
 
 		t.a = 0x1a
-		local s = @t["a"]
+		local s = @t.a
 		assert(r == s)
 		assert(tostring(r) ~= tostring(s))
 		assert(r[] == 0x1a)
