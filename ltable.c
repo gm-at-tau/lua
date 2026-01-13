@@ -535,19 +535,37 @@ static void reinsert (lua_State *L, Table *ot, Table *t) {
       luaH_set(L, t, &k, gval(old));
     }
   }
-  if (anyref(t)) {
-    for (j = 0; j < size; j++) {
-      Node *old = gnode(ot, j);
-      if (!isfree(gval(old))) {
-        TValue k;
-        getnodekey(L, &k, old);
-        if (isref(gval(old))) {
-          TValue *slot = cast(TValue *, luaH_get(t, &k));
-          lua_assert(!isabstkey(slot));
-          luaA_forward(gval(old), slot);
-        } else {
-          setnilvalue(gval(old));
-        }
+}
+
+
+static void forward (lua_State *L, Table *ot, Table *t) {
+  int i;
+  int hsize = sizenode(ot);
+  int asize = limitasasize(t);
+  for (i = 0; i < hsize; i++) {
+    Node *old = gnode(ot, i);
+    if (!isfree(gval(old))) {
+      TValue k;
+      getnodekey(L, &k, old);
+      if (isref(gval(old))) {
+        TValue *slot = cast(TValue *, luaH_get(t, &k));
+        lua_assert(!isabstkey(slot));
+        luaA_forward(gval(old), slot);
+      } else {
+        setnilvalue(gval(old));
+      }
+    }
+  }
+  if (ot->array != t->array) {
+    for (i = limitasasize(t); i < asize; i++) {
+      TValue *old = &ot->array[i];
+      if (isref(old)) {
+        TValue *slot = cast(TValue *, luaH_getint(t, i));
+        lua_assert(!isabstkey(slot));
+        luaA_forward(old, slot);
+      }
+      else {
+        setempty(old);
       }
     }
   }
@@ -610,9 +628,12 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
   unsigned int i;
   Table newt;  /* to keep the new hash part */
   unsigned int oldasize = setlimittosize(t);
-  TValue *oldarray = t->array;
   /* create new hash part with appropriate size into 'newt' */
   setnodevector(L, &newt, newhsize);
+  newt.alimit = t->alimit;
+  newt.flags = 0;
+  setrealasize(&newt);
+  newt.array = t->array;
   newt.rc = t->rc;
   if (newasize < oldasize) {  /* will array shrink? */
     t->alimit = newasize;  /* pretend array has new size... */
@@ -636,17 +657,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int newasize,
   /* re-insert elements from old hash part into new parts */
   reinsert(L, &newt, t);  /* 'newt' now has the old hash */
   if (anyref(t)) {
-    for (i = newasize; i < oldasize; i++) {
-      TValue *old = &oldarray[i];
-      if (isref(old)) {
-        TValue *slot = cast(TValue *, luaH_getint(t, i));
-        lua_assert(!isabstkey(slot));
-        luaA_forward(old, slot);
-      }
-      else {
-        setempty(old);
-      }
-    }
+    forward(L, &newt, t);
   }
   freehash(L, &newt);  /* free old hash part */
 }
