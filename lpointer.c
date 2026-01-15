@@ -16,6 +16,7 @@
 #include "lua.h"
 
 #include "ldo.h"
+#include "ldebug.h"
 #include "lgc.h"
 #include "lmem.h"
 #include "lobject.h"
@@ -100,10 +101,17 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize,
 }
 
 
+static TValue nilpointer = {ABSTKEYCONSTANT};
+
+
 /* Address of rawget(t, key) */
 lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
-  lua_Ptr ptr = cast(TValue *, luaH_get(t, key));
-  UNUSED(L);
+  lua_Ptr ptr = &nilpointer;
+  if (gfasttm(G(L), t->metatable, TM_MODE) != NULL) {
+    luaG_runerror(L, "cannot take address of weak tables");
+    return ptr;
+  }
+  ptr = cast(TValue *, luaH_get(t, key));
   if (!isabstkey(ptr) && !isref(ptr))
     incref(t);
   return ptr;

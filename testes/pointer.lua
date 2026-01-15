@@ -154,6 +154,14 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
+		print "WEAK"
+		local t = setmetatable({ a = 0xa }, { __mode = "k" })
+		assert(not pcall(function () return @t.a end))
+	end
+
+	collectgarbage()
+
+	do
 		print "NIL VALUES"
 		local t = { 0xa, 0xb, 0xc, 0xd }
 		local s = ""
