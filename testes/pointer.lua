@@ -12,7 +12,7 @@ for _, opt in ipairs(gc) do
 	do
 		local t = { 0xa, 0xb, 0xc, 0xd, a = 0xa }
 
-		print "ARRAY"
+		print "array references"
 		a0 = @t[2]
 		assert(type(a0) == "pointer")
 		assert(tostring(a0) == string.format("pointer: %p", a0))
@@ -49,7 +49,7 @@ for _, opt in ipairs(gc) do
 
 		assert(not pcall(rawset, t, a0, 3))
 
-		print "FIELDS"
+		print "string fields"
 		local h0, h1
 		h0 = @t.a
 		assert(type(h0) == "pointer")
@@ -79,14 +79,14 @@ for _, opt in ipairs(gc) do
 	end
 	refs[1] = a0
 	refs[2] = a1
-	print "SCOPE"
+	print "collecting locals"
 
 	local box = (function()
 		local t = { { "box of box" } }
 		return @t[1]
 	end)()
 
-	print "BOX"
+	print "boxing references"
 	-- once for table, once for box
 	for _ = 1, 3 do
 		collectgarbage()
@@ -104,7 +104,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
-		print "TM"
+		print "metamethods"
 		local tm = {}
 		function tm.__addr(t, i)
 			return ptr.rawaddr(t, i + 1)
@@ -119,7 +119,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
-		print "CYCLE"
+		print "reference cycles"
 		local t = { 0 }
 		local r = @t[1]
 		t[1] = r
@@ -129,7 +129,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
-		print "FIELDS"
+		print "string references"
 		local t = { a = 0xa, b = 0xb, c = 0xc }
 		local r = @t.a
 		t.a = nil
@@ -154,7 +154,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
-		print "WEAK"
+		print "weak tables"
 		local t = setmetatable({ a = 0xa }, { __mode = "k" })
 		assert(not pcall(function () return @t.a end))
 	end
@@ -162,7 +162,7 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
-		print "NIL VALUES"
+		print "collecting nil values"
 		local t = { 0xa, 0xb, 0xc, 0xd }
 		local s = ""
 		do
