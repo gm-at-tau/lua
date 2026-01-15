@@ -551,7 +551,7 @@ static void traversestrongtable (global_State *g, Table *h) {
     if (isempty(v) && isref(v)) {
       nils += 1;
       if (!iswhite(v) || isdead(g, v))
-        unref(v);
+        rmref(v);
     } else {
       markvalue(g, v);
     }
@@ -562,7 +562,7 @@ static void traversestrongtable (global_State *g, Table *h) {
         markkey(g, n);
         nils += 1;
         if (!iswhite(gval(n)) || isdead(g, gval(n)))
-          unref(gval(n));
+          rmref(gval(n));
       } else
         clearkey(n);  /* clear its key */
     }

@@ -32,11 +32,11 @@ LUAI_DDEF const lu_byte luaP_opmodes[NUM_OPCODES] = {
  ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_GETTABLE */
  ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_GETI */
  ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_GETFIELD */
- ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_ADDRESS */
  ,opmode(0, 0, 0, 0, 0, iABC)		/* OP_SETTABUP */
  ,opmode(0, 0, 0, 0, 0, iABC)		/* OP_SETTABLE */
  ,opmode(0, 0, 0, 0, 0, iABC)		/* OP_SETI */
  ,opmode(0, 0, 0, 0, 0, iABC)		/* OP_SETFIELD */
+ ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_ADDRESS */
  ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_NEWTABLE */
  ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_SELF */
  ,opmode(0, 0, 0, 0, 1, iABC)		/* OP_ADDI */

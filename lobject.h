@@ -78,7 +78,7 @@ typedef struct TValue {
 #define BIT_BOX		(1u << 1)
 
 #define setref(o)	((o)->marked |= BIT_REF)
-#define unref(o)	((o)->marked &= ~BIT_REF)
+#define rmref(o)	((o)->marked &= ~BIT_REF)
 #define isref(o)	((o)->marked & BIT_REF)
 #define isboxed(o)	((o)->marked & BIT_BOX)
 #define mark_(o)	((o)->marked)

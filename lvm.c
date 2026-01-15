@@ -1330,13 +1330,6 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
           Protect(luaV_finishget(L, rb, rc, ra, slot));
         vmbreak;
       }
-      vmcase(OP_ADDRESS) {
-        StkId ra = RA(i);
-        TValue *rb = vRB(i);
-        TValue *rc = vRC(i);
-        Protect(luaV_address(L, rb, rc, ra));
-        vmbreak;
-      }
       vmcase(OP_SETTABUP) {
         const TValue *slot;
         TValue *upval = cl->upvals[GETARG_A(i)]->v.p;
@@ -1391,6 +1384,13 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
         }
         else
           Protect(luaV_finishset(L, s2v(ra), rb, rc, slot));
+        vmbreak;
+      }
+      vmcase(OP_ADDRESS) {
+        StkId ra = RA(i);
+        TValue *rb = vRB(i);
+        TValue *rc = vRC(i);
+        Protect(luaV_address(L, rb, rc, ra));
         vmbreak;
       }
       vmcase(OP_NEWTABLE) {
