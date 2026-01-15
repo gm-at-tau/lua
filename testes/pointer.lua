@@ -142,10 +142,34 @@ for _, opt in ipairs(gc) do
 		assert(r == s)
 		assert(tostring(r) ~= tostring(s))
 		assert(r[] == 0x1a)
+
+		r = @t.f
+		assert(r == nil)
+		t.f = 0xf
+		r = @t.f
+		r[] = 0xf
+		assert(r[] == 0xf)
 	end
 
 	collectgarbage()
 
+	do
+		print "NIL VALUES"
+		local t = { 0xa, 0xb, 0xc, 0xd }
+		local s = ""
+		do
+			s = tostring(@t[4])
+			t[4] = nil
+			t[3] = nil
+			t[2] = nil
+		end
+		collectgarbage()
+		t.a = 0x1b
+		t[4] = 0x1d
+		assert(s ~= tostring(@t[4]))
+	end
+
+	collectgarbage()
 end
 
 print "OK"

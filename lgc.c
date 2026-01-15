@@ -543,17 +543,27 @@ static int traverseephemeron (global_State *g, Table *h, int inv) {
 
 static void traversestrongtable (global_State *g, Table *h) {
   Node *n, *limit = gnodelast(h);
+  unsigned int nils = 0;
   unsigned int i;
   unsigned int asize = luaH_realasize(h);
-  for (i = 0; i < asize; i++)  /* traverse array part */
-    markvalue(g, &h->array[i]);
+  for (i = 0; i < asize; i++) { /* traverse array part */
+    TValue *v = &h->array[i];
+    if (isempty(v) && isref(v)) {
+      nils += 1;
+      if (!iswhite(v) || isdead(g, v))
+        unref(v);
+    } else {
+      markvalue(g, v);
+    }
+  }
   for (n = gnode(h, 0); n < limit; n++) {  /* traverse hash part */
     if (isempty(gval(n))) {  /* entry is empty? */
       if (isref(gval(n))) {
         markkey(g, n);
-        markvalue(g, gval(n));
-      }
-      else
+        nils += 1;
+        if (!iswhite(gval(n)) || isdead(g, gval(n)))
+          unref(gval(n));
+      } else
         clearkey(n);  /* clear its key */
     }
     else {

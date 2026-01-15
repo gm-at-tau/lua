@@ -1471,7 +1471,7 @@ LUA_API int lua_rawaddr (lua_State *L, int idx) {
   t = gettable(L, idx);
   val = luaA_addr(L, t, s2v(L->top.p - 1));
   L->top.p--;  /* remove key */
-  if (isempty(val)) { /* avoid copying empty items to the stack */
+  if (isabstkey(val)) { /* avoid copying empty items to the stack */
     setnilvalue(s2v(L->top.p));
   } else {
     setavalue(s2v(L->top.p), val);

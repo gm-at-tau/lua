@@ -295,7 +295,7 @@ void luaV_address (lua_State *L, const TValue *t, const TValue *key,
   }
   else {
     lua_Ptr addr = luaA_addr(L, hvalue(t), key);
-    if (isempty(addr)) { /* avoid copying empty items to the stack */
+    if (isabstkey(addr)) { /* avoid copying empty items to the stack */
       setnilvalue(s2v(val));
     } else {
       setavalue(s2v(val), addr);

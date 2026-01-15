@@ -63,9 +63,9 @@ void luaA_freemem (lua_State *L, void *array, size_t size) {
   f->n += 1;
 }
 
+/* called after atomic(L) */
 void luaA_box (lua_State *L, TValue *value) {
-  lu_byte white = otherwhite(G(L)); /* called after atomic(L) */
-  if (isref(value) && isdeadm(white, value->marked)) {
+  if (isref(value) && isdead(G(L), value)) {
     GCBox *box = luaS_newbox(L, value);
     setavalue(value, boxedvalue(box));
     settt_(value, LUA_VFWDADDRESS);
@@ -102,11 +102,9 @@ TValue *luaA_reallocarray (lua_State *L, TValue *array, size_t oldsize,
 
 /* Address of rawget(t, key) */
 lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
-  lua_Ptr ptr = (TValue *)luaH_get(t, key);
+  lua_Ptr ptr = cast(TValue *, luaH_get(t, key));
   UNUSED(L);
-  if (isempty(ptr))
-    return ptr;
-  if (!isref(ptr))
+  if (!isabstkey(ptr) && !isref(ptr))
     incref(t);
   return ptr;
 }
