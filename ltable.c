@@ -547,6 +547,7 @@ static void forward (lua_State *L, Table *ot, Table *t) {
         lua_assert(!isabstkey(slot));
         luaA_forward(gval(old), slot);
       } else {
+        refc(t, gval(old));
         setnilvalue(gval(old));
       }
     }
@@ -560,6 +561,7 @@ static void forward (lua_State *L, Table *ot, Table *t) {
         luaA_forward(old, slot);
       }
       else {
+        refc(t, old);
         setempty(old);
       }
     }

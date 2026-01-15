@@ -74,14 +74,17 @@ typedef struct TValue {
 #define val_(o)		((o)->value_)
 #define valraw(o)	(val_(o))
 
-#define BIT_REF		(1u << 0)
-#define BIT_BOX		(1u << 1)
+#define BIT_REF	        (1u << 0)
+#define BIT_UNREF       (1u << 1)
+#define BIT_BOX	        (1u << 2)
 
-#define setref(o)	((o)->marked |= BIT_REF)
-#define rmref(o)	((o)->marked &= ~BIT_REF)
+#define setref(o)	((o)->marked |= BIT_REF, (o)->marked &= ~BIT_UNREF)
+#define rmref(o)	((o)->marked |= BIT_UNREF, (o)->marked &= ~BIT_REF)
 #define isref(o)	((o)->marked & BIT_REF)
 #define isboxed(o)	((o)->marked & BIT_BOX)
 #define mark_(o)	((o)->marked)
+#define refc(h, v)	{ if ((v)->marked & BIT_UNREF) { \
+					(v)->marked = 0; decref(h); } }
 
 
 /* raw type tag of a TValue */
@@ -799,6 +802,7 @@ typedef struct Table {
 
 #define anyref(t)	((t)->rc != 0)
 #define incref(t)	((t)->rc += 1u)
+#define decref(t)	((t)->rc -= 1u)
 
 /*
 ** Macros to manipulate keys inserted in nodes

@@ -553,18 +553,21 @@ static void traversestrongtable (global_State *g, Table *h) {
       if (!iswhite(v) || isdead(g, v))
         rmref(v);
     } else {
+      refc(h, v);
       markvalue(g, v);
     }
   }
   for (n = gnode(h, 0); n < limit; n++) {  /* traverse hash part */
+    refc(h, gval(n));
     if (isempty(gval(n))) {  /* entry is empty? */
       if (isref(gval(n))) {
         markkey(g, n);
         nils += 1;
         if (!iswhite(gval(n)) || isdead(g, gval(n)))
           rmref(gval(n));
-      } else
+      } else {
         clearkey(n);  /* clear its key */
+      }
     }
     else {
       lua_assert(!keyisnil(n));
