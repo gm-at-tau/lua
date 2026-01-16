@@ -132,6 +132,7 @@ static GCObject **getgclist (GCObject *o) {
     case LUA_VCCL: return &gco2ccl(o)->gclist;
     case LUA_VTHREAD: return &gco2th(o)->gclist;
     case LUA_VPROTO: return &gco2p(o)->gclist;
+    case LUA_VBOX: return &gco2b(o)->gclist;
     case LUA_VUSERDATA: {
       Udata *u = gco2u(o);
       lua_assert(u->nuvalue > 0);
@@ -313,12 +314,6 @@ static void reallymarkobject (global_State *g, GCObject *o) {
       markvalue(g, uv->v.p);  /* mark its content */
       break;
     }
-    case LUA_VBOX: {
-      GCBox *b = gco2b(o);
-      markvalue(g, boxedvalue(b));
-      set2black(b);
-      break;
-    }
     case LUA_VUSERDATA: {
       Udata *u = gco2u(o);
       if (u->nuvalue == 0) {  /* no user values? */
@@ -328,6 +323,7 @@ static void reallymarkobject (global_State *g, GCObject *o) {
       }
       /* else... */
     }  /* FALLTHROUGH */
+    case LUA_VBOX:
     case LUA_VLCL: case LUA_VCCL: case LUA_VTABLE:
     case LUA_VTHREAD: case LUA_VPROTO: {
       linkobjgclist(o, g->gray);  /* to be visited later */
@@ -708,6 +704,11 @@ static lu_mem propagatemark (global_State *g) {
     case LUA_VCCL: return traverseCclosure(g, gco2ccl(o));
     case LUA_VPROTO: return traverseproto(g, gco2p(o));
     case LUA_VTHREAD: return traversethread(g, gco2th(o));
+    case LUA_VBOX: {
+      markvalue(g, boxedvalue(gco2b(o)));
+      genlink(g, o);
+      return 1;
+    }
     default: lua_assert(0); return 0;
   }
 }

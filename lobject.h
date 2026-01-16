@@ -457,6 +457,7 @@ typedef struct TString {
 typedef struct GCBox {
   CommonHeader;
   TValue box;  /* value */
+  GCObject *gclist;
 } GCBox;
 
 #define boxedvalue(o)	(&(o)->box)
