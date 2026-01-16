@@ -104,6 +104,18 @@ for _, opt in ipairs(gc) do
 	collectgarbage()
 
 	do
+		print "explicit boxing"
+		local b = ptr.box(0xa)
+		assert(type(b) == "pointer")
+		assert(b[] == 0xa)
+		collectgarbage()
+		b[] = 0xb
+		assert(b[] == 0xb)
+	end
+
+	collectgarbage()
+
+	do
 		print "metamethods"
 		local tm = {}
 		function tm.__addr(t, i)

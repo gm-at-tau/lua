@@ -1519,3 +1519,13 @@ LUA_API void lua_assign (lua_State *L, int idx) {
   lua_unlock(L);
 }
 
+
+LUA_API void lua_box (lua_State *L, int idx) {
+  GCBox *box;
+  lua_lock(L);
+  box = luaS_newbox(L, index2value(L, idx));
+  setavalue(s2v(L->top.p), boxedvalue(box));
+  api_incr_top(L);
+  lua_unlock(L);
+}
+

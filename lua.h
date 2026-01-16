@@ -366,6 +366,7 @@ LUA_API int (lua_rawaddr) (lua_State *L, int idx);
 LUA_API int (lua_addr) (lua_State *L, int idx);
 LUA_API void (lua_deref) (lua_State *L, int idx);
 LUA_API void (lua_assign) (lua_State *L, int idx);
+LUA_API void (lua_box) (lua_State *L, int idx);
 
 /*
 ** {==============================================================

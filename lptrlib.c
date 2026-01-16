@@ -52,6 +52,12 @@ static int pointer_assign (lua_State *L) {
 }
 
 
+static int pointer_box (lua_State *L) {
+  lua_box(L, 1);
+  return 1;
+}
+
+
 /*
 ** {======================================================
 ** METAMETHODS
@@ -90,6 +96,7 @@ static const luaL_Reg pointer_functions[] = {
   {"addr", pointer_addr},
   {"deref", pointer_deref},
   {"assign", pointer_assign},
+  {"box", pointer_box},
   {"index", pointer_index},
   {"newindex", pointer_newindex},
   {NULL, NULL},
