@@ -74,16 +74,16 @@ typedef struct TValue {
 #define val_(o)		((o)->value_)
 #define valraw(o)	(val_(o))
 
-#define BIT_REF	        (1u << 0)
+#define BIT_REF         (1u << 0)
 #define BIT_UNREF       (1u << 1)
-#define BIT_BOX	        (1u << 2)
+#define BIT_BOX         (1u << 2)
 
-#define setref(o)	((o)->marked |= BIT_REF, (o)->marked &= ~BIT_UNREF)
-#define rmref(o)	((o)->marked |= BIT_UNREF, (o)->marked &= ~BIT_REF)
-#define isref(o)	((o)->marked & BIT_REF)
-#define isboxed(o)	((o)->marked & BIT_BOX)
-#define mark_(o)	((o)->marked)
-#define refc(h, v)	{ if ((v)->marked & BIT_UNREF) { \
+#define setref(o)       ((o)->marked |= BIT_REF, (o)->marked &= ~BIT_UNREF)
+#define rmref(o)        ((o)->marked |= BIT_UNREF, (o)->marked &= ~BIT_REF)
+#define isref(o)        ((o)->marked & BIT_REF)
+#define isboxed(o)      ((o)->marked & BIT_BOX)
+#define mark_(o)        ((o)->marked)
+#define refc(h, v)      { if ((v)->marked & BIT_UNREF) { \
 					(v)->marked = 0; decref(h); } }
 
 
@@ -230,7 +230,6 @@ typedef union {
 ** be accepted as empty.)
 */
 #define isempty(v)		ttisnil(v)
-#define isreallyempty(v)		checktag((o), LUA_VEMPTY)
 #define isfree(v)		(ttisnil(v) && !isref(v))
 
 
@@ -460,9 +459,9 @@ typedef struct GCBox {
   GCObject *gclist;
 } GCBox;
 
-#define boxedvalue(o)	(&(o)->box)
-#define reinterpretbox(o)	((GCBox *)((char *)o - offsetof(GCBox, box)))
-#define intobox(o)	check_exp(isboxed(o), reinterpretbox(o))
+#define boxedvalue(o)          (&(o)->box)
+#define reinterpretbox(o)      ((GCBox *)((char *)o - offsetof(GCBox, box)))
+#define intobox(o)	       check_exp(isboxed(o), reinterpretbox(o))
 
 
 /* }================================================================== */

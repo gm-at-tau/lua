@@ -35,7 +35,6 @@
 #define nodefromval(v)	cast(Node *, (v))
 
 
-LUAI_FUNC const TValue *luaH_getarray (Table *t, lua_Integer key);
 LUAI_FUNC const TValue *luaH_getint (Table *t, lua_Integer key);
 LUAI_FUNC void luaH_setint (lua_State *L, Table *t, lua_Integer key,
                                                     TValue *value);

@@ -44,7 +44,7 @@
 ** MAXABITS is the largest integer such that MAXASIZE fits in an
 ** unsigned int.
 */
-#define MAXABITS  cast_int(sizeof(int) * CHAR_BIT - 1)
+#define MAXABITS	cast_int(sizeof(int) * CHAR_BIT - 1)
 
 
 /*
@@ -52,13 +52,13 @@
 ** between 2^MAXABITS and the maximum size that, measured in bytes,
 ** fits in a 'size_t'.
 */
-#define MAXASIZE  luaM_limitN(1u << MAXABITS, TValue)
+#define MAXASIZE	luaM_limitN(1u << MAXABITS, TValue)
 
 /*
 ** MAXHBITS is the largest integer such that 2^MAXHBITS fits in a
 ** signed int.
 */
-#define MAXHBITS  (MAXABITS - 1)
+#define MAXHBITS	(MAXABITS - 1)
 
 
 /*
@@ -66,7 +66,7 @@
 ** between 2^MAXHBITS and the maximum size such that, measured in bytes,
 ** it fits in a 'size_t'.
 */
-#define MAXHSIZE  luaM_limitN(1u << MAXHBITS, Node)
+#define MAXHSIZE	luaM_limitN(1u << MAXHBITS, Node)
 
 
 /*
@@ -839,7 +839,7 @@ static void luaH_newkey (lua_State *L, Table *t, const TValue *key,
 ** If key is 0 or negative, 'res' will have its higher bit on, so that
 ** if cannot be smaller than alimit.
 */
-const TValue *luaH_getarray (Table *t, lua_Integer key) {
+const TValue *luaH_getint (Table *t, lua_Integer key) {
   lua_Unsigned alimit = t->alimit;
   if (l_castS2U(key) - 1u < alimit)  /* 'key' in [1, t->alimit]? */
     return &t->array[key - 1];
@@ -848,15 +848,6 @@ const TValue *luaH_getarray (Table *t, lua_Integer key) {
     t->alimit = cast_uint(key);  /* probably '#t' is here now */
     return &t->array[key - 1];
   }
-  else /* key is not in the array part; check the hash */
-    return &absentkey;
-}
-
-
-const TValue *luaH_getint (Table *t, lua_Integer key) {
-  const TValue *array = luaH_getarray(t, key);
-  if (!isabstkey(array))
-    return array;
   else {  /* key is not in the array part; check the hash */
     Node *n = hashint(t, key);
     for (;;) {  /* check whether 'key' is somewhere in the chain */

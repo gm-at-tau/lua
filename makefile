@@ -182,10 +182,11 @@ loslib.o: loslib.c lprefix.h lua.h luaconf.h lauxlib.h lualib.h
 lparser.o: lparser.c lprefix.h lua.h luaconf.h lcode.h llex.h lobject.h \
  llimits.h lzio.h lmem.h lopcodes.h lparser.h ldebug.h lstate.h ltm.h \
  ldo.h lfunc.h lstring.h lgc.h ltable.h
-lpointer.o: lpointer.c lprefix.h llimits.h lua.h luaconf.h lgc.h \
- lobject.h lstate.h ltm.h lzio.h lmem.h lpointer.h lstring.h ltable.h
-lptrlib.o: lptrlib.c lprefix.h lua.h luaconf.h lapi.h llimits.h lstate.h \
- lobject.h ltm.h lzio.h lmem.h lauxlib.h lgc.h lualib.h
+lpointer.o: lpointer.c lprefix.h llimits.h lua.h luaconf.h ldo.h \
+ lobject.h lstate.h ltm.h lzio.h lmem.h ldebug.h lgc.h lpointer.h \
+ lstring.h ltable.h
+lptrlib.o: lptrlib.c lprefix.h lua.h luaconf.h lgc.h lobject.h llimits.h \
+ lstate.h ltm.h lzio.h lmem.h lapi.h lauxlib.h lualib.h
 lstate.o: lstate.c lprefix.h lua.h luaconf.h lapi.h llimits.h lstate.h \
  lobject.h ltm.h lzio.h lmem.h ldebug.h ldo.h lfunc.h lgc.h llex.h \
  lstring.h ltable.h lpointer.h
