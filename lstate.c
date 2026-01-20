@@ -255,6 +255,8 @@ static void preinit_thread (lua_State *L, global_State *g) {
   L->twups = L;  /* thread has no upvalues */
   L->nCcalls = 0;
   L->errorJmp = NULL;
+  L->pid = 0;
+  L->nextproc = NULL;
   L->hook = NULL;
   L->hookmask = 0;
   L->basehookcount = 0;
@@ -273,10 +275,8 @@ static void close_state (lua_State *L) {
   for (; Ls != NULL; Ls = Ls->nextproc) {
     if (Ls != L) {
       int res;
-      lua_unlock(L);
       thrd_join(Ls->thread, &res);
       lua_assert(res == 0);
-      lua_lock(L);
     }
   }
   if (!completestate(g))  /* closing a partially built state? */
@@ -309,6 +309,7 @@ LUA_API lua_State *lua_newthread (lua_State *L) {
   setthvalue2s(L, L->top.p, L1);
   api_incr_top(L);
   preinit_thread(L1, g);
+  L1->pid = L->pid;
   L1->hookmask = L->hookmask;
   L1->basehookcount = L->basehookcount;
   L1->hook = L->hook;
@@ -327,7 +328,12 @@ void luaE_freethread (lua_State *L, lua_State *L1) {
   LX *l = fromstate(L1);
   luaF_closeupval(L1, L1->stack.p);  /* close all upvalues */
   lua_assert(L1->openupval == NULL);
-  luai_userstatefree(L, L1);
+  if (L->pid == L1->pid) {
+    luai_userstatefree(L, L1);
+  }
+  else {
+    luai_userstateclose(L);
+  }
   freestack(L1);
   luaM_free(L, l);
 }
@@ -464,12 +470,14 @@ void luaE_warnerror (lua_State *L, const char *where) {
 static int thrd_func(void *opaque) {
   lua_State *L = cast(lua_State *, opaque);
   TValue *fi;
+
   lua_lock(L);
   fi = s2v(L->top.p - 1);
   api_check(L, ttisLclosure(fi), "Lua function expected");
   UNUSED(fi);
   luaD_call(L, L->top.p - 1, 0);
   lua_unlock(L);
+
   thrd_exit(0);
 }
 
@@ -477,6 +485,8 @@ static int thrd_func(void *opaque) {
 LUA_API void lua_proc (lua_State *L) {
   global_State *g = G(L);
   lua_State *NL = lua_newthread(L);
+  luai_userstateopen(NL);
+  NL->pid = ++g->pids;
   NL->nextproc = NULL;
   g->sched.tail->nextproc = NL;
   g->sched.tail = NL;

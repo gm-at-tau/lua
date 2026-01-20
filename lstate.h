@@ -7,6 +7,11 @@
 #ifndef lstate_h
 #define lstate_h
 
+
+#include <stdatomic.h>
+#include <threads.h>
+
+
 #include "lua.h"
 
 
@@ -264,8 +269,9 @@ typedef struct global_State {
   l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
+  atomic_ushort pids; /* counter of used pids */
+  scheduler sched; /* linked list of processes */
   stringtable strt;  /* hash table for strings */
-  scheduler sched;
   TValue l_registry;
   TValue nilvalue;  /* a nil value */
   unsigned int seed;  /* randomized seed for hashes */
@@ -318,6 +324,7 @@ struct lua_State {
   lu_byte status;
   lu_byte allowhook;
   unsigned short nci;  /* number of items in 'ci' list */
+  unsigned short pid; /* lightweight process id */
   StkIdRel top;  /* first free slot in the stack */
   global_State *l_G;
   CallInfo *ci;  /* call info for current function */
@@ -329,8 +336,8 @@ struct lua_State {
   struct lua_State *twups;  /* list of threads with open upvalues */
   struct lua_longjmp *errorJmp;  /* current error recover point */
   CallInfo base_ci;  /* CallInfo for first level (C calling Lua) */
-  struct lua_State *nextproc;
-  thrd_t thread;
+  struct lua_State *nextproc; /* list of lightweight processes */
+  thrd_t thread; /* C11 thread id */
   volatile lua_Hook hook;
   ptrdiff_t errfunc;  /* current error handling function (stack index) */
   l_uint32 nCcalls;  /* number of nested (non-yieldable | C)  calls */
