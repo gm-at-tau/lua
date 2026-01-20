@@ -395,6 +395,7 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   incnny(L);  /* main thread is always non yieldable */
   g->frealloc = f;
   g->ud = ud;
+  mtx_init(&g->sched.mtx, mtx_plain);
   g->sched.head = L;
   g->sched.tail = L;
   g->warnf = NULL;
@@ -487,9 +488,12 @@ LUA_API void lua_proc (lua_State *L) {
   lua_State *NL = lua_newthread(L);
   luai_userstateopen(NL);
   NL->pid = ++g->pids;
+
+  mtx_lock(&g->sched.mtx);
   NL->nextproc = NULL;
   g->sched.tail->nextproc = NL;
   g->sched.tail = NL;
+  mtx_unlock(&g->sched.mtx);
 
   lua_lock(L);
   setobjs2s(NL, NL->top.p, L->top.p - 2);
@@ -503,5 +507,6 @@ LUA_API void lua_proc (lua_State *L) {
 
 LUA_API int lua_reschedule (lua_State *L) {
   UNUSED(L);
+  thrd_yield();
   return 0;
 }

@@ -4,6 +4,7 @@
 ** See Copyright Notice in lua.h
 */
 
+#include <threads.h>
 #define ltests_c
 #define LUA_CORE
 
@@ -188,6 +189,7 @@ typedef union Header {
 #endif
 
 
+mtx_t l_memlock;
 Memcontrol l_memcontrol =
   {0, 0UL, 0UL, 0UL, 0UL, (~0UL),
    {0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL}};
@@ -215,6 +217,7 @@ void *debug_realloc (void *ud, void *b, size_t oldsize, size_t size) {
   if (mc->memlimit == 0) {  /* first time? */
     char *limit = getenv("MEMLIMIT");  /* initialize memory limit */
     mc->memlimit = limit ? strtoul(limit, NULL, 10) : ULONG_MAX;
+    mtx_init(&l_memlock, mtx_plain);
   }
   if (block == NULL) {
     type = (oldsize < LUA_NUMTAGS) ? oldsize : 0;
@@ -225,21 +228,22 @@ void *debug_realloc (void *ud, void *b, size_t oldsize, size_t size) {
     type = block->d.type;
     lua_assert(oldsize == block->d.size);
   }
+  mtx_lock(&l_memlock);
   if (size == 0) {
     freeblock(mc, block);
-    return NULL;
+    goto fail;
   }
   if (mc->failnext) {
     mc->failnext = 0;
-    return NULL;  /* fake a single memory allocation error */
+    goto fail;  /* fake a single memory allocation error */
   }
   if (mc->countlimit != ~0UL && size != oldsize) {  /* count limit in use? */
     if (mc->countlimit == 0)
-      return NULL;  /* fake a memory allocation error */
+      goto fail;  /* fake a memory allocation error */
     mc->countlimit--;
   }
   if (size > oldsize && mc->total+size-oldsize > mc->memlimit)
-    return NULL;  /* fake a memory allocation error */
+    goto fail;  /* fake a memory allocation error */
   else {
     Header *newblock;
     int i;
@@ -265,8 +269,12 @@ void *debug_realloc (void *ud, void *b, size_t oldsize, size_t size) {
       mc->maxmem = mc->total;
     mc->numblocks++;
     mc->objcount[type]++;
+    mtx_unlock(&l_memlock);
     return newblock + 1;
   }
+fail:
+  mtx_unlock(&l_memlock);
+  return NULL;
 }
 
 

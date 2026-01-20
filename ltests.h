@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <threads.h>
 
 /* test Lua with compatibility code */
 #define LUA_COMPAT_MATHLIB

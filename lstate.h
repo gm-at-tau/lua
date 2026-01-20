@@ -165,6 +165,7 @@ typedef struct stringtable {
 
 
 typedef struct scheduler {
+  mtx_t mtx;
   struct lua_State *head;
   struct lua_State *tail;
 } scheduler;
@@ -266,7 +267,7 @@ typedef struct global_State {
   lua_Alloc frealloc;  /* function to reallocate memory */
   void *ud;         /* auxiliary data to 'frealloc' */
   l_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
-  l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
+  _Atomic l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
   atomic_ushort pids; /* counter of used pids */
