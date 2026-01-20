@@ -317,6 +317,14 @@ LUA_API int (lua_isyieldable) (lua_State *L);
 
 
 /*
+** lightweight process functions
+*/
+LUA_API void (lua_proc) (lua_State *L);
+LUA_API int (lua_reschedule) (lua_State *L);
+
+
+
+/*
 ** Warning-related functions
 */
 LUA_API void (lua_setwarnf) (lua_State *L, lua_WarnFunction f, void *ud);

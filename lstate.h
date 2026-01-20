@@ -159,6 +159,12 @@ typedef struct stringtable {
 } stringtable;
 
 
+typedef struct scheduler {
+  struct lua_State *head;
+  struct lua_State *tail;
+} scheduler;
+
+
 /*
 ** Information about a call.
 ** About union 'u':
@@ -259,6 +265,7 @@ typedef struct global_State {
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
   stringtable strt;  /* hash table for strings */
+  scheduler sched;
   TValue l_registry;
   TValue nilvalue;  /* a nil value */
   unsigned int seed;  /* randomized seed for hashes */
@@ -312,6 +319,7 @@ struct lua_State {
   lu_byte allowhook;
   unsigned short nci;  /* number of items in 'ci' list */
   StkIdRel top;  /* first free slot in the stack */
+  struct lua_State *nextproc;
   global_State *l_G;
   CallInfo *ci;  /* call info for current function */
   StkIdRel stack_last;  /* end of stack (last element + 1) */

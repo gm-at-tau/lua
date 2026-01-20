@@ -503,6 +503,18 @@ static int luaB_tostring (lua_State *L) {
 }
 
 
+static int luaB_proc (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+  lua_proc(L);
+  return 0;
+}
+
+
+static int luaB_reschedule (lua_State *L) {
+  return lua_reschedule(L);
+}
+
+
 static const luaL_Reg base_funcs[] = {
   {"assert", luaB_assert},
   {"collectgarbage", luaB_collectgarbage},
@@ -527,6 +539,8 @@ static const luaL_Reg base_funcs[] = {
   {"tostring", luaB_tostring},
   {"type", luaB_type},
   {"xpcall", luaB_xpcall},
+  {"proc", luaB_proc},
+  {"yield", luaB_reschedule},
   /* placeholders */
   {LUA_GNAME, NULL},
   {"_VERSION", NULL},

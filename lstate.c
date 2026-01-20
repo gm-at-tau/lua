@@ -374,9 +374,12 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   preinit_thread(L, g);
   g->allgc = obj2gco(L);  /* by now, only object is the main thread */
   L->next = NULL;
+  L->nextproc = NULL;
   incnny(L);  /* main thread is always non yieldable */
   g->frealloc = f;
   g->ud = ud;
+  g->sched.head = L;
+  g->sched.tail = L;
   g->warnf = NULL;
   g->ud_warn = NULL;
   g->mainthread = L;
@@ -446,3 +449,31 @@ void luaE_warnerror (lua_State *L, const char *where) {
   luaE_warning(L, ")", 0);
 }
 
+
+LUA_API void lua_proc (lua_State *L) {
+  global_State *g = G(L);
+  TValue *fi;
+  lua_State *NL = lua_newthread(L);
+  NL->nextproc = NULL;
+  g->sched.tail->nextproc = NL;
+  g->sched.tail = NL;
+
+  lua_lock(L);
+  setobjs2s(NL, NL->top.p, L->top.p - 2);
+  api_incr_top(NL);
+  setnilvalue(s2v(L->top.p - 1)); /* clear thread from local stack */
+  lua_unlock(L);
+
+  lua_lock(NL);
+  fi = s2v(NL->top.p - 1);
+  api_check(L, ttisLclosure(fi), "Lua function expected");
+  UNUSED(fi);
+  luaD_call(NL, NL->top.p - 1, 0);
+  lua_unlock(NL);
+}
+
+
+LUA_API int lua_reschedule (lua_State *L) {
+  UNUSED(L);
+  return 0;
+}

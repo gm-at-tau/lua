@@ -401,8 +401,14 @@ static void cleargraylists (global_State *g) {
 ** mark root set and reset all gray lists, to start a new collection
 */
 static void restartcollection (global_State *g) {
+  lua_State *Ls = g->sched.head;
   cleargraylists(g);
   markobject(g, g->mainthread);
+  for (; Ls != NULL; Ls = Ls->nextproc) {
+    if (Ls != g->mainthread) {
+      markobject(g, Ls);
+    }
+  }
   markvalue(g, &g->l_registry);
   markmt(g);
   markbeingfnz(g);  /* mark any finalizing object left from previous cycle */
@@ -1524,6 +1530,7 @@ void luaC_freeallobjects (lua_State *L) {
 
 static lu_mem atomic (lua_State *L) {
   global_State *g = G(L);
+  lua_State *Ls = g->sched.head;
   lu_mem work = 0;
   GCObject *origweak, *origall;
   GCObject *grayagain = g->grayagain;  /* save original list */
@@ -1532,6 +1539,11 @@ static lu_mem atomic (lua_State *L) {
   lua_assert(!iswhite(g->mainthread));
   g->gcstate = GCSatomic;
   markobject(g, L);  /* mark running thread */
+  for (; Ls != NULL; Ls = Ls->nextproc) {
+    if (Ls != L) {
+      markobject(g, Ls);
+    }
+  }
   /* registry and global metatables may be changed by API */
   markvalue(g, &g->l_registry);
   markmt(g);  /* mark global metatables */
