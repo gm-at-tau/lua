@@ -162,13 +162,16 @@ void luaM_free_ (lua_State *L, void *block, size_t osize) {
 static void *tryagain (lua_State *L, void *block,
                        size_t osize, size_t nsize) {
   global_State *g = G(L);
+  luaE_lock(g);
   if (cantryagain(g)) {
-    mtx_lock(&g->sched.mtx);
     luaC_fullgc(L, 1);  /* try to free some memory... */
-    mtx_unlock(&g->sched.mtx);
+    luaE_unlock(g);
     return callfrealloc(g, block, osize, nsize);  /* try again */
   }
-  else return NULL;  /* cannot run an emergency collection */
+  else {
+    luaE_unlock(g);
+    return NULL;  /* cannot run an emergency collection */
+  }
 }
 
 
@@ -186,7 +189,8 @@ void *luaM_realloc_ (lua_State *L, void *block, size_t osize, size_t nsize) {
       return NULL;  /* do not update 'GCdebt' */
   }
   lua_assert((nsize == 0) == (newblock == NULL));
-  g->GCdebt = (g->GCdebt + nsize) - osize;
+  g->GCdebt += nsize;
+  g->GCdebt -= osize;
   return newblock;
 }
 

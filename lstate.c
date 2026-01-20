@@ -325,8 +325,11 @@ LUA_API lua_State *lua_newthread (lua_State *L) {
 
 
 void luaE_freethread (lua_State *L, lua_State *L1) {
+  global_State *g = G(L);
   LX *l = fromstate(L1);
+  luaE_unlock(g);
   luaF_closeupval(L1, L1->stack.p);  /* close all upvalues */
+  luaE_lock(g);
   lua_assert(L1->openupval == NULL);
   if (L->pid == L1->pid) {
     luai_userstatefree(L, L1);
@@ -489,11 +492,11 @@ LUA_API void lua_proc (lua_State *L) {
   luai_userstateopen(NL);
   NL->pid = ++g->pids;
 
-  mtx_lock(&g->sched.mtx);
+  luaE_lock(g);
   NL->nextproc = NULL;
   g->sched.tail->nextproc = NL;
   g->sched.tail = NL;
-  mtx_unlock(&g->sched.mtx);
+  luaE_unlock(g);
 
   lua_lock(L);
   setobjs2s(NL, NL->top.p, L->top.p - 2);

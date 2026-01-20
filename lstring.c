@@ -174,7 +174,7 @@ void luaS_remove (lua_State *L, TString *ts) {
 
 static void growstrtab (lua_State *L, stringtable *tb) {
   if (l_unlikely(tb->nuse == MAX_INT)) {  /* too many strings? */
-    luaC_fullgc(L, 1);  /* try to free some... */
+    lua_locked(L, luaC_fullgc(L, 1));  /* try to free some... */
     if (tb->nuse == MAX_INT)  /* still too many? */
       luaM_error(L);  /* cannot even create a message... */
   }

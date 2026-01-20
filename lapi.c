@@ -960,7 +960,7 @@ LUA_API int lua_setmetatable (lua_State *L, int objindex) {
       break;
     }
     default: {
-      G(L)->mt[ttype(obj)] = mt;
+      lua_locked(L, G(L)->mt[ttype(obj)] = mt);
       break;
     }
   }
@@ -1149,7 +1149,7 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
       break;
     }
     case LUA_GCCOLLECT: {
-      luaC_fullgc(L, 0);
+      lua_locked(L, luaC_fullgc(L, 0));
       break;
     }
     case LUA_GCCOUNT: {
@@ -1168,7 +1168,7 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
       g->gcstp = 0;  /* allow GC to run (GCSTPGC must be zero here) */
       if (data == 0) {
         luaE_setdebt(g, 0);  /* do a basic step */
-        luaC_step(L);
+        lua_locked(L, luaC_step(L));
       }
       else {  /* add 'data' to total debt */
         debt = cast(l_mem, data) * 1024 + g->GCdebt;
@@ -1182,14 +1182,18 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
     }
     case LUA_GCSETPAUSE: {
       int data = va_arg(argp, int);
+      luaE_lock(g);
       res = getgcparam(g->gcpause);
       setgcparam(g->gcpause, data);
+      luaE_unlock(g);
       break;
     }
     case LUA_GCSETSTEPMUL: {
       int data = va_arg(argp, int);
+      luaE_lock(g);
       res = getgcparam(g->gcstepmul);
       setgcparam(g->gcstepmul, data);
+      luaE_unlock(g);
       break;
     }
     case LUA_GCISRUNNING: {
@@ -1199,18 +1203,21 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
     case LUA_GCGEN: {
       int minormul = va_arg(argp, int);
       int majormul = va_arg(argp, int);
+      luaE_lock(g);
       res = isdecGCmodegen(g) ? LUA_GCGEN : LUA_GCINC;
       if (minormul != 0)
         g->genminormul = minormul;
       if (majormul != 0)
         setgcparam(g->genmajormul, majormul);
       luaC_changemode(L, KGC_GEN);
+      luaE_unlock(g);
       break;
     }
     case LUA_GCINC: {
       int pause = va_arg(argp, int);
       int stepmul = va_arg(argp, int);
       int stepsize = va_arg(argp, int);
+      luaE_lock(g);
       res = isdecGCmodegen(g) ? LUA_GCGEN : LUA_GCINC;
       if (pause != 0)
         setgcparam(g->gcpause, pause);
@@ -1219,6 +1226,7 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
       if (stepsize != 0)
         g->gcstepsize = stepsize;
       luaC_changemode(L, KGC_INC);
+      luaE_unlock(g);
       break;
     }
     default: res = -1;  /* invalid option */

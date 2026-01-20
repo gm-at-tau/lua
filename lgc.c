@@ -944,8 +944,10 @@ static void GCTM (lua_State *L) {
 static int runafewfinalizers (lua_State *L, int n) {
   global_State *g = G(L);
   int i;
+  luaE_unlock(g);
   for (i = 0; i < n && g->tobefnz; i++)
     GCTM(L);  /* call one finalizer */
+  luaE_lock(g);
   return i;
 }
 
@@ -955,8 +957,10 @@ static int runafewfinalizers (lua_State *L, int n) {
 */
 static void callallpendingfinalizers (lua_State *L) {
   global_State *g = G(L);
+  luaE_unlock(g);
   while (g->tobefnz)
     GCTM(L);
+  luaE_lock(g);
 }
 
 
@@ -1024,10 +1028,11 @@ static void correctpointers (global_State *g, GCObject *o) {
 */
 void luaC_checkfinalizer (lua_State *L, GCObject *o, Table *mt) {
   global_State *g = G(L);
+  luaE_lock(g);
   if (tofinalize(o) ||                 /* obj. is already marked... */
       gfasttm(g, mt, TM_GC) == NULL ||    /* or has no finalizer... */
       (g->gcstp & GCSTPCLS))                   /* or closing state? */
-    return;  /* nothing to be done */
+    UNUSED(L);  /* nothing to be done */
   else {  /* move 'o' to 'finobj' list */
     GCObject **p;
     if (issweepphase(g)) {
@@ -1044,6 +1049,7 @@ void luaC_checkfinalizer (lua_State *L, GCObject *o, Table *mt) {
     g->finobj = o;
     l_setbit(o->marked, FINALIZEDBIT);  /* mark it as such */
   }
+  luaE_unlock(g);
 }
 
 /* }====================================================== */

@@ -356,6 +356,8 @@ typedef l_uint32 Instruction;
 #endif
 
 
+#define lua_locked(L, func)		\
+	{ luaE_lock(G(L)); func; luaE_unlock(G(L)); }
 
 
 
@@ -374,7 +376,7 @@ typedef l_uint32 Instruction;
 #define condchangemem(L,pre,pos)	((void)0)
 #else
 #define condchangemem(L,pre,pos)  \
-	{ if (gcrunning(G(L))) { pre; luaC_fullgc(L, 0); pos; } }
+	{ if (gcrunning(G(L))) { pre; lua_locked(L, luaC_fullgc(L, 0)); pos; } }
 #endif
 
 #endif

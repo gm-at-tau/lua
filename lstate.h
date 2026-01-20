@@ -266,7 +266,7 @@ struct CallInfo {
 typedef struct global_State {
   lua_Alloc frealloc;  /* function to reallocate memory */
   void *ud;         /* auxiliary data to 'frealloc' */
-  l_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
+  _Atomic l_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
   _Atomic l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
   lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
   lu_mem lastatomic;  /* see function 'genstep' in file 'lgc.c' */
@@ -409,6 +409,10 @@ union GCUnion {
 
 /* actual number of total bytes allocated */
 #define gettotalbytes(g)	cast(lu_mem, (g)->totalbytes + (g)->GCdebt)
+
+#define luaE_lock(g) { mtx_lock(&(g)->sched.mtx); }
+#define luaE_unlock(g) { mtx_unlock(&(g)->sched.mtx); }
+
 
 LUAI_FUNC void luaE_setdebt (global_State *g, l_mem debt);
 LUAI_FUNC void luaE_freethread (lua_State *L, lua_State *L1);

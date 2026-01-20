@@ -165,25 +165,26 @@
 ** GC cycle on every opportunity)
 */
 #define luaC_condGC(L,pre,pos) \
-	{ if (G(L)->GCdebt > 0) { pre; luaC_step(L); pos;}; \
+	{ if (G(L)->GCdebt > 0) { pre; lua_locked(L, luaC_step(L)); pos;}; \
 	  condchangemem(L,pre,pos); }
 
 /* more often than not, 'pre'/'pos' are empty */
 #define luaC_checkGC(L)		luaC_condGC(L,(void)0,(void)0)
 
 
-#define luaC_objbarrier(L,p,o) (  \
-	(isblack(p) && iswhite(o)) ? \
-	luaC_barrier_(L,obj2gco(p),obj2gco(o)) : cast_void(0))
+#define luaC_objbarrier(L,p,o) {  \
+	if (isblack(p) && iswhite(o)) { \
+	lua_locked(L, luaC_barrier_(L,obj2gco(p),obj2gco(o))); } }
 
-#define luaC_barrier(L,p,v) (  \
-	iscollectable(v) ? luaC_objbarrier(L,p,gcvalue(v)) : cast_void(0))
+#define luaC_barrier(L,p,v) {  \
+	if (iscollectable(v)) { luaC_objbarrier(L,p,gcvalue(v)); } }
 
-#define luaC_objbarrierback(L,p,o) (  \
-	(isblack(p) && iswhite(o)) ? luaC_barrierback_(L,p) : cast_void(0))
+#define luaC_objbarrierback(L,p,o) {  \
+	if (isblack(p) && iswhite(o)) { \
+	lua_locked(L, luaC_barrierback_(L,p)); } }
 
-#define luaC_barrierback(L,p,v) (  \
-	iscollectable(v) ? luaC_objbarrierback(L, p, gcvalue(v)) : cast_void(0))
+#define luaC_barrierback(L,p,v) {  \
+	if (iscollectable(v)) { luaC_objbarrierback(L, p, gcvalue(v)); } }
 
 LUAI_FUNC void luaC_fix (lua_State *L, GCObject *o);
 LUAI_FUNC void luaC_freeallobjects (lua_State *L);
