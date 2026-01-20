@@ -10,6 +10,7 @@
 
 
 #include <stdarg.h>
+#include <threads.h>
 
 
 #include "llimits.h"

@@ -10,6 +10,7 @@
 #include "lprefix.h"
 
 
+#include <threads.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -268,6 +269,16 @@ static void preinit_thread (lua_State *L, global_State *g) {
 
 static void close_state (lua_State *L) {
   global_State *g = G(L);
+  lua_State *Ls = g->sched.head;
+  for (; Ls != NULL; Ls = Ls->nextproc) {
+    if (Ls != L) {
+      int res;
+      lua_unlock(L);
+      thrd_join(Ls->thread, &res);
+      lua_assert(res == 0);
+      lua_lock(L);
+    }
+  }
   if (!completestate(g))  /* closing a partially built state? */
     luaC_freeallobjects(L);  /* just collect its objects */
   else {  /* closing a fully built state */
@@ -450,9 +461,21 @@ void luaE_warnerror (lua_State *L, const char *where) {
 }
 
 
+static int thrd_func(void *opaque) {
+  lua_State *L = cast(lua_State *, opaque);
+  TValue *fi;
+  lua_lock(L);
+  fi = s2v(L->top.p - 1);
+  api_check(L, ttisLclosure(fi), "Lua function expected");
+  UNUSED(fi);
+  luaD_call(L, L->top.p - 1, 0);
+  lua_unlock(L);
+  thrd_exit(0);
+}
+
+
 LUA_API void lua_proc (lua_State *L) {
   global_State *g = G(L);
-  TValue *fi;
   lua_State *NL = lua_newthread(L);
   NL->nextproc = NULL;
   g->sched.tail->nextproc = NL;
@@ -464,12 +487,7 @@ LUA_API void lua_proc (lua_State *L) {
   setnilvalue(s2v(L->top.p - 1)); /* clear thread from local stack */
   lua_unlock(L);
 
-  lua_lock(NL);
-  fi = s2v(NL->top.p - 1);
-  api_check(L, ttisLclosure(fi), "Lua function expected");
-  UNUSED(fi);
-  luaD_call(NL, NL->top.p - 1, 0);
-  lua_unlock(NL);
+  thrd_create(&NL->thread, thrd_func, NL);
 }
 
 
