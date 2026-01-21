@@ -646,8 +646,11 @@ static int traversethread (global_State *g, lua_State *th) {
   for (uv = th->openupval; uv != NULL; uv = uv->u.open.next)
     markobject(g, uv);  /* open upvalues cannot be collected */
   if (g->gcstate == GCSatomic) {  /* final traversal? */
-    if (!g->gcemergency)
+    if (!g->gcemergency) {
+      luaE_unlock(g);
       luaD_shrinkstack(th); /* do not change stack in emergency cycle */
+      luaE_lock(g);
+    }
     for (o = th->top.p; o < th->stack_last.p + EXTRA_STACK; o++)
       setnilvalue(s2v(o));  /* clear dead stack slice */
     /* 'remarkupvals' may have removed thread from 'twups' list */
@@ -878,7 +881,9 @@ static void checkSizes (lua_State *L, global_State *g) {
   if (!g->gcemergency) {
     if (g->strt.nuse < g->strt.size / 4) {  /* string table too big? */
       l_mem olddebt = g->GCdebt;
+      luaE_unlock(g);
       luaS_resize(L, g->strt.size / 2);
+      luaE_lock(g);
       g->GCestimate += g->GCdebt - olddebt;  /* correct estimate */
     }
   }
@@ -1522,6 +1527,7 @@ static void deletelist (lua_State *L, GCObject *p, GCObject *limit) {
 */
 void luaC_freeallobjects (lua_State *L) {
   global_State *g = G(L);
+  luaE_lock(g);
   g->gcstp = GCSTPCLS;  /* no extra finalizers after here */
   luaC_changemode(L, KGC_INC);
   separatetobefnz(g, 1);  /* separate all objects with finalizers */
@@ -1531,6 +1537,7 @@ void luaC_freeallobjects (lua_State *L) {
   lua_assert(g->finobj == NULL);  /* no new finalizers */
   deletelist(L, g->fixedgc, NULL);  /* collect fixed objects */
   lua_assert(g->strt.nuse == 0);
+  luaE_unlock(g);
 }
 
 

@@ -960,7 +960,7 @@ LUA_API int lua_setmetatable (lua_State *L, int objindex) {
       break;
     }
     default: {
-      lua_locked(L, G(L)->mt[ttype(obj)] = mt);
+      G(L)->mt[ttype(obj)] = mt;
       break;
     }
   }

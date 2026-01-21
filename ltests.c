@@ -4,13 +4,13 @@
 ** See Copyright Notice in lua.h
 */
 
-#include <threads.h>
 #define ltests_c
 #define LUA_CORE
 
 #include "lprefix.h"
 
 
+#include <threads.h>
 #include <limits.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -960,11 +960,13 @@ static int gc_state (lua_State *L) {
     if (G(L)->gckind == KGC_GEN)
       luaL_error(L, "cannot change states in generational mode");
     lua_lock(L);
+    luaE_lock(g);
     if (option < g->gcstate) {  /* must cross 'pause'? */
       luaC_runtilstate(L, bitmask(GCSpause));  /* run until pause */
     }
     luaC_runtilstate(L, bitmask(option));
     lua_assert(G(L)->gcstate == option);
+    luaE_unlock(g);
     lua_unlock(L);
     return 0;
   }

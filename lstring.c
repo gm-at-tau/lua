@@ -28,6 +28,10 @@
 #define MAXSTRTB	cast_int(luaM_limitN(MAX_INT, TString*))
 
 
+#define luaS_lock(g)	lua_mtx_lock(&(g)->strt.mtx)
+#define luaS_unlock(g)	lua_mtx_unlock(&(g)->strt.mtx)
+
+
 /*
 ** equality for long strings
 */
@@ -83,12 +87,17 @@ static void tablerehash (TString **vect, int osize, int nsize) {
 ** correctly.)
 */
 void luaS_resize (lua_State *L, int nsize) {
-  stringtable *tb = &G(L)->strt;
-  int osize = tb->size;
+  global_State *g = G(L);
+  stringtable *tb = &g->strt;
+  int osize;
   TString **newvect;
+  luaS_lock(g);
+  osize = tb->size;
   if (nsize < osize)  /* shrinking table? */
     tablerehash(tb->hash, osize, nsize);  /* depopulate shrinking part */
+  luaS_unlock(g);
   newvect = luaM_reallocvector(L, tb->hash, osize, nsize, TString*);
+  luaS_lock(g);
   if (l_unlikely(newvect == NULL)) {  /* reallocation failed? */
     if (nsize < osize)  /* was it shrinking table? */
       tablerehash(tb->hash, nsize, osize);  /* restore to original size */
@@ -100,6 +109,7 @@ void luaS_resize (lua_State *L, int nsize) {
     if (nsize > osize)
       tablerehash(newvect, osize, nsize);  /* rehash for new size */
   }
+  luaS_unlock(g);
 }
 
 
@@ -123,7 +133,7 @@ void luaS_clearcache (global_State *g) {
 void luaS_init (lua_State *L) {
   global_State *g = G(L);
   int i, j;
-  stringtable *tb = &G(L)->strt;
+  stringtable *tb = &g->strt;
   tb->hash = luaM_newvector(L, MINSTRTABSIZE, TString*);
   tablerehash(tb->hash, 0, MINSTRTABSIZE);  /* clear array */
   tb->size = MINSTRTABSIZE;
@@ -163,12 +173,16 @@ TString *luaS_createlngstrobj (lua_State *L, size_t l) {
 
 
 void luaS_remove (lua_State *L, TString *ts) {
-  stringtable *tb = &G(L)->strt;
-  TString **p = &tb->hash[lmod(ts->hash, tb->size)];
+  global_State *g = G(L);
+  stringtable *tb = &g->strt;
+  TString **p;
+  luaS_lock(g);
+  p = &tb->hash[lmod(ts->hash, tb->size)];
   while (*p != ts)  /* find previous element */
     p = &(*p)->u.hnext;
   *p = (*p)->u.hnext;  /* remove element from its list */
   tb->nuse--;
+  luaS_unlock(g);
 }
 
 
@@ -187,31 +201,38 @@ static void growstrtab (lua_State *L, stringtable *tb) {
 ** Checks whether short string exists and reuses it or creates a new one.
 */
 static TString *internshrstr (lua_State *L, const char *str, size_t l) {
-  TString *ts;
+  TString *ts, **list;
   global_State *g = G(L);
   stringtable *tb = &g->strt;
   unsigned int h = luaS_hash(str, l, g->seed);
-  TString **list = &tb->hash[lmod(h, tb->size)];
+  luaS_lock(g);
+  list = &tb->hash[lmod(h, tb->size)];
   lua_assert(str != NULL);  /* otherwise 'memcmp'/'memcpy' are undefined */
   for (ts = *list; ts != NULL; ts = ts->u.hnext) {
     if (l == ts->shrlen && (memcmp(str, getshrstr(ts), l * sizeof(char)) == 0)) {
       /* found! */
       if (isdead(g, ts))  /* dead (but not collected yet)? */
         changewhite(ts);  /* resurrect it */
+      luaS_unlock(g);
       return ts;
     }
   }
   /* else must create a new string */
   if (tb->nuse >= tb->size) {  /* need to grow string table? */
+    luaS_unlock(g);
     growstrtab(L, tb);
-    list = &tb->hash[lmod(h, tb->size)];  /* rehash with new size */
+  } else {
+    luaS_unlock(g);
   }
   ts = createstrobj(L, l, LUA_VSHRSTR, h);
+  luaS_lock(g);
+  list = &tb->hash[lmod(h, tb->size)];  /* rehash with new size */
   ts->shrlen = cast_byte(l);
   memcpy(getshrstr(ts), str, l * sizeof(char));
   ts->u.hnext = *list;
   *list = ts;
   tb->nuse++;
+  luaS_unlock(g);
   return ts;
 }
 
@@ -240,17 +261,23 @@ TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
 ** check hits.
 */
 TString *luaS_new (lua_State *L, const char *str) {
+  global_State *g = G(L);
   unsigned int i = point2uint(str) % STRCACHE_N;  /* hash */
   int j;
-  TString **p = G(L)->strcache[i];
+  TString **p;
+  luaS_lock(g);
+  p = g->strcache[i];
   for (j = 0; j < STRCACHE_M; j++) {
-    if (strcmp(str, getstr(p[j])) == 0)  /* hit? */
+    if (strcmp(str, getstr(p[j])) == 0) { /* hit? */
+      luaS_unlock(g);
       return p[j];  /* that is it */
+    }
   }
   /* normal route */
   for (j = STRCACHE_M - 1; j > 0; j--)
     p[j] = p[j - 1];  /* move out last element */
   /* new element is first in the list */
+  luaS_unlock(g);
   p[0] = luaS_newlstr(L, str, strlen(str));
   return p[0];
 }

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <threads.h>
+#include <stdatomic.h>
 
 /* test Lua with compatibility code */
 #define LUA_COMPAT_MATHLIB
@@ -95,6 +96,11 @@ struct L_EXTRA { int lock; int *plock; };
 #define lua_lock(l)     lua_assert((*getlock(l)->plock)++ == 0)
 #define lua_unlock(l)   lua_assert(--(*getlock(l)->plock) == 0)
 
+
+typedef atomic_uint lu_mtx;
+#define lua_mtx_init(mtx)	(*(mtx) = 0)
+#define lua_mtx_lock(mtx)	lua_assert(((++*(mtx)) & 1) == 1)
+#define lua_mtx_unlock(mtx)	lua_assert(((++*(mtx)) & 1) == 0)
 
 
 LUA_API int luaB_opentests (lua_State *L);

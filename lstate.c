@@ -398,7 +398,8 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   incnny(L);  /* main thread is always non yieldable */
   g->frealloc = f;
   g->ud = ud;
-  mtx_init(&g->sched.mtx, mtx_plain);
+  lua_mtx_init(&g->sched.gc_mtx);
+  lua_mtx_init(&g->sched.queue_mtx);
   g->sched.head = L;
   g->sched.tail = L;
   g->warnf = NULL;
@@ -406,6 +407,7 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->mainthread = L;
   g->seed = luai_makeseed(L);
   g->gcstp = GCSTPGC;  /* no GC while building state */
+  lua_mtx_init(&g->strt.mtx);
   g->strt.size = g->strt.nuse = 0;
   g->strt.hash = NULL;
   setnilvalue(&g->l_registry);
@@ -492,11 +494,11 @@ LUA_API void lua_proc (lua_State *L) {
   luai_userstateopen(NL);
   NL->pid = ++g->pids;
 
-  luaE_lock(g);
+  lua_mtx_lock(&g->sched.queue_mtx);
   NL->nextproc = NULL;
   g->sched.tail->nextproc = NL;
   g->sched.tail = NL;
-  luaE_unlock(g);
+  lua_mtx_unlock(&g->sched.queue_mtx);
 
   lua_lock(L);
   setobjs2s(NL, NL->top.p, L->top.p - 2);

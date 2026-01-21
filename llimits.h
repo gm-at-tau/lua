@@ -10,6 +10,7 @@
 
 #include <limits.h>
 #include <stddef.h>
+#include <threads.h>
 
 
 #include "lua.h"
@@ -355,11 +356,15 @@ typedef l_uint32 Instruction;
 #define luai_numisnan(a)        (!luai_numeq((a), (a)))
 #endif
 
+#ifndef lua_mtx_lock
+typedef mtx_t lu_mtx;
+#define lua_mtx_init(mtx)	mtx_init(mtx, mtx_plain);
+#define lua_mtx_lock(mtx)	mtx_lock(mtx)
+#define lua_mtx_unlock(mtx)	mtx_unlock(mtx)
+#endif
 
 #define lua_locked(L, func)		\
 	{ luaE_lock(G(L)); func; luaE_unlock(G(L)); }
-
-
 
 /*
 ** macro to control inclusion of some hard tests on stack reallocation

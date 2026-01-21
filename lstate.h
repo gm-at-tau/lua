@@ -161,11 +161,13 @@ typedef struct stringtable {
   TString **hash;
   int nuse;  /* number of elements */
   int size;
+  lu_mtx mtx;
 } stringtable;
 
 
 typedef struct scheduler {
-  mtx_t mtx;
+  lu_mtx gc_mtx;
+  lu_mtx queue_mtx;
   struct lua_State *head;
   struct lua_State *tail;
 } scheduler;
@@ -410,9 +412,8 @@ union GCUnion {
 /* actual number of total bytes allocated */
 #define gettotalbytes(g)	cast(lu_mem, (g)->totalbytes + (g)->GCdebt)
 
-#define luaE_lock(g) { mtx_lock(&(g)->sched.mtx); }
-#define luaE_unlock(g) { mtx_unlock(&(g)->sched.mtx); }
-
+#define luaE_lock(g)	lua_mtx_lock(&(g)->sched.gc_mtx)
+#define luaE_unlock(g)	lua_mtx_unlock(&(g)->sched.gc_mtx)
 
 LUAI_FUNC void luaE_setdebt (global_State *g, l_mem debt);
 LUAI_FUNC void luaE_freethread (lua_State *L, lua_State *L1);
