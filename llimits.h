@@ -361,6 +361,7 @@ typedef mtx_t lu_mtx;
 #define lua_mtx_init(mtx)	mtx_init(mtx, mtx_plain);
 #define lua_mtx_lock(mtx)	mtx_lock(mtx)
 #define lua_mtx_unlock(mtx)	mtx_unlock(mtx)
+#define lua_mtx_destroy(mtx)	mtx_destroy(mtx)
 #endif
 
 #define lua_locked(L, func)		\

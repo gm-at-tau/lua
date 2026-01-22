@@ -289,7 +289,10 @@ static void close_state (lua_State *L) {
     luaC_freeallobjects(L);  /* collect all objects */
     luai_userstateclose(L);
   }
-  luaM_freearray(L, G(L)->strt.hash, G(L)->strt.size);
+  luaM_freearray(L, g->strt.hash, g->strt.size);
+  lua_mtx_destroy(&g->strt.mtx);
+  lua_mtx_destroy(&g->sched.gc_mtx);
+  lua_mtx_destroy(&g->sched.queue_mtx);
   freestack(L);
   lua_assert(gettotalbytes(g) == sizeof(LG));
   (*g->frealloc)(g->ud, fromstate(L), sizeof(LG), 0);  /* free main block */

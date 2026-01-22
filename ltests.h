@@ -101,6 +101,7 @@ typedef atomic_uint lu_mtx;
 #define lua_mtx_init(mtx)	(*(mtx) = 0)
 #define lua_mtx_lock(mtx)	lua_assert(((++*(mtx)) & 1) == 1)
 #define lua_mtx_unlock(mtx)	lua_assert(((++*(mtx)) & 1) == 0)
+#define lua_mtx_destroy(mtx)	lua_assert(((*(mtx)) & 1) == 0)
 
 
 LUA_API int luaB_opentests (lua_State *L);
