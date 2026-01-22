@@ -476,15 +476,17 @@ void luaE_warnerror (lua_State *L, const char *where) {
 }
 
 
-static int thrd_func(void *opaque) {
+static int thrd_func (void *opaque) {
   lua_State *L = cast(lua_State *, opaque);
   TValue *fi;
+  int status;
 
   lua_lock(L);
   fi = s2v(L->top.p - 1);
   api_check(L, ttisLclosure(fi), "Lua function expected");
   UNUSED(fi);
-  luaD_call(L, L->top.p - 1, 0);
+  status = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
+  UNUSED(status);
   lua_unlock(L);
 
   thrd_exit(0);
