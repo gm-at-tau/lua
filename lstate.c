@@ -275,7 +275,7 @@ static void close_state (lua_State *L) {
   for (; Ls != NULL; Ls = Ls->nextproc) {
     if (Ls != L) {
       int res;
-      thrd_join(Ls->thread, &res);
+      lua_thrd_assert(thrd_join(Ls->thread, &res));
       lua_assert(res == 0);
     }
   }
@@ -509,7 +509,7 @@ LUA_API void lua_proc (lua_State *L) {
   setnilvalue(s2v(L->top.p - 1)); /* clear thread from local stack */
   lua_unlock(L);
 
-  thrd_create(&NL->thread, thrd_func, NL);
+  lua_thrd_assert(thrd_create(&NL->thread, thrd_func, NL));
 }
 
 

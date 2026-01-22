@@ -356,11 +356,13 @@ typedef l_uint32 Instruction;
 #define luai_numisnan(a)        (!luai_numeq((a), (a)))
 #endif
 
+#define lua_thrd_assert(s)	((s == thrd_success) ? ((void) 0) : lua_assert(0))
+
 #ifndef lua_mtx_lock
 typedef mtx_t lu_mtx;
-#define lua_mtx_init(mtx)	mtx_init(mtx, mtx_plain);
-#define lua_mtx_lock(mtx)	mtx_lock(mtx)
-#define lua_mtx_unlock(mtx)	mtx_unlock(mtx)
+#define lua_mtx_init(mtx)	lua_thrd_assert(mtx_init(mtx, mtx_plain))
+#define lua_mtx_lock(mtx)	lua_thrd_assert(mtx_lock(mtx))
+#define lua_mtx_unlock(mtx)	lua_thrd_assert(mtx_unlock(mtx))
 #define lua_mtx_destroy(mtx)	mtx_destroy(mtx)
 #endif
 
