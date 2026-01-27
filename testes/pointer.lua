@@ -3,6 +3,7 @@ local gc = { "incremental", "generational" }
 
 for _, opt in ipairs(gc) do
 	collectgarbage()
+	print(string.rep("-", 20))
 	print(opt)
 	collectgarbage(opt)
 	collectgarbage()
@@ -192,6 +193,34 @@ for _, opt in ipairs(gc) do
 	end
 
 	collectgarbage()
+
+	do
+		collectgarbage("stop")
+		collectgarbage("setstepmul", 1)
+		print "reviving pointers inside table"
+		local t = { 0xa, 0xb, 0xc, 0xd }
+		local b = { { @t[1] } }
+		local r = tostring(b[1][1])
+		local n = 0
+		if _G.test then -- before atomic
+			if T then n = 160 else n = 120 end
+		else
+			if T then n = 44 else n = 35 end
+		end
+		collectgarbage("step", n)
+		print("step")
+		t[5] = 0xe
+		t[6] = 0xf
+		assert(tostring(@t[1]) ~= r)
+		assert(tostring(b[1][1]) == r) -- not revived
+		collectgarbage("step", 0)
+		collectgarbage("step", 0)
+		print("garbage")
+		assert(tostring(b[1][1]) ~= r) -- revived
+		assert(b[1][1][] == 0xa)
+		b[1][1][] = 0x1a
+		assert(t[1] == 0x1a)
+	end
 end
 
 print "OK"

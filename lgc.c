@@ -539,13 +539,13 @@ static int traverseephemeron (global_State *g, Table *h, int inv) {
 
 static void traversestrongtable (global_State *g, Table *h) {
   Node *n, *limit = gnodelast(h);
-  unsigned int nils = 0;
+  unsigned int refs = 0;
   unsigned int i;
   unsigned int asize = luaH_realasize(h);
   for (i = 0; i < asize; i++) { /* traverse array part */
     TValue *v = &h->array[i];
+    refs += ttisaddress(v);
     if (isempty(v) && isref(v)) {
-      nils += 1;
       if (!iswhite(v) || isdead(g, v))
         rmref(v);
     } else {
@@ -555,10 +555,10 @@ static void traversestrongtable (global_State *g, Table *h) {
   }
   for (n = gnode(h, 0); n < limit; n++) {  /* traverse hash part */
     refc(h, gval(n));
+    refs += ttisaddress(gval(n));
     if (isempty(gval(n))) {  /* entry is empty? */
       if (isref(gval(n))) {
         markkey(g, n);
-        nils += 1;
         if (!iswhite(gval(n)) || isdead(g, gval(n)))
           rmref(gval(n));
       } else {
@@ -571,7 +571,10 @@ static void traversestrongtable (global_State *g, Table *h) {
       markvalue(g, gval(n));
     }
   }
-  genlink(g, obj2gco(h));
+  if (refs > 0 && g->gcstate == GCSpropagate)
+    linkobjgclist(obj2gco(h), g->grayagain);
+  else
+    genlink(g, obj2gco(h));
 }
 
 
@@ -599,11 +602,18 @@ static lu_mem traversetable (global_State *g, Table *h) {
 
 
 static int traverseudata (global_State *g, Udata *u) {
+  unsigned int refs = 0;
   int i;
   markobjectN(g, u->metatable);  /* mark its metatable */
-  for (i = 0; i < u->nuvalue; i++)
-    markvalue(g, &u->uv[i].uv);
-  genlink(g, obj2gco(u));
+  for (i = 0; i < u->nuvalue; i++) {
+    TValue *uv = &u->uv[i].uv;
+    markvalue(g, uv);
+    refs += ttisaddress(uv);
+  }
+  if (refs > 0 && g->gcstate == GCSpropagate)
+    linkobjgclist(obj2gco(u), g->grayagain);
+  else
+    genlink(g, obj2gco(u));
   return 1 + u->nuvalue;
 }
 
@@ -629,9 +639,15 @@ static int traverseproto (global_State *g, Proto *f) {
 
 
 static int traverseCclosure (global_State *g, CClosure *cl) {
+  unsigned int refs = 0;
   int i;
-  for (i = 0; i < cl->nupvalues; i++)  /* mark its upvalues */
-    markvalue(g, &cl->upvalue[i]);
+  for (i = 0; i < cl->nupvalues; i++) {  /* mark its upvalues */
+    TValue *uv = &cl->upvalue[i];
+    markvalue(g, uv);
+    refs += ttisaddress(uv);
+  }
+  if (refs > 0 && g->gcstate == GCSpropagate)
+    linkobjgclist(obj2gco(cl), g->grayagain);
   return 1 + cl->nupvalues;
 }
 
@@ -640,12 +656,19 @@ static int traverseCclosure (global_State *g, CClosure *cl) {
 ** (Both can be NULL while closure is being created.)
 */
 static int traverseLclosure (global_State *g, LClosure *cl) {
+  unsigned int refs = 0;
   int i;
   markobjectN(g, cl->p);  /* mark its prototype */
   for (i = 0; i < cl->nupvalues; i++) {  /* visit its upvalues */
     UpVal *uv = cl->upvals[i];
     markobjectN(g, uv);  /* mark upvalue */
+    if (uv != NULL) {
+      markvalue(g, uv->v.p);  /* for reviving the pointer */
+      refs += ttisaddress(uv->v.p);
+    }
   }
+  if (refs > 0 && g->gcstate == GCSpropagate)
+    linkobjgclist(obj2gco(cl), g->grayagain);
   return 1 + cl->nupvalues;
 }
 
@@ -690,6 +713,18 @@ static int traversethread (global_State *g, lua_State *th) {
 }
 
 
+static int traversebox (global_State *g, GCBox *b) {
+  unsigned int refs = 0;
+  markvalue(g, boxedvalue(b));
+  refs = ttisaddress(boxedvalue(b));
+  if (refs > 0 && g->gcstate == GCSpropagate)
+    linkobjgclist(obj2gco(b), g->grayagain);
+  else
+    genlink(g, obj2gco(b));
+  return 1;
+}
+
+
 /*
 ** traverse one gray object, turning it to black.
 */
@@ -704,11 +739,7 @@ static lu_mem propagatemark (global_State *g) {
     case LUA_VCCL: return traverseCclosure(g, gco2ccl(o));
     case LUA_VPROTO: return traverseproto(g, gco2p(o));
     case LUA_VTHREAD: return traversethread(g, gco2th(o));
-    case LUA_VBOX: {
-      markvalue(g, boxedvalue(gco2b(o)));
-      genlink(g, o);
-      return 1;
-    }
+    case LUA_VBOX: return traversebox(g, gco2b(o));
     default: lua_assert(0); return 0;
   }
 }
