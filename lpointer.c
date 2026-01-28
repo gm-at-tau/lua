@@ -38,17 +38,15 @@ void luaA_collect (lua_State *L) {
   LZarray *f = &G(L)->lzfree;
   int i = 0;
   StkId p = L->stack.p;
-  if (p != NULL) {
-    for (; p != L->stack_last.p; ++p) {
+  if (p != NULL)
+    for (; p != L->top.p; ++p) {
       TValue *addr = s2v(p);
-      if (ttisaddress(addr)) {
-        lua_Ptr ptr = luaA_revive(avalue(addr));
-        setavalue(addr, ptr);
-      }
+      if (ttisaddress(addr))
+        luaA_deref(addr);
     }
-  }
-  for (i = 0; i != f->n; ++i)
+  for (i = 0; i != f->n; ++i) {
     luaM_freemem(L, f->arr[i].mem, f->arr[i].size);
+  }
   f->n = 0;
 }
 
@@ -64,14 +62,14 @@ void luaA_freemem (lua_State *L, void *array, size_t size) {
   f->n += 1;
 }
 
-/* called after atomic(L) */
 void luaA_box (lua_State *L, TValue *value) {
   if (isref(value) && isdead(G(L), value)) {
     GCBox *box = luaS_newbox(L, value);
     setavalue(value, boxedvalue(box));
     settt_(value, LUA_VFWDADDRESS);
-  } else
+  } else {
     setempty(value);
+  }
 }
 
 void luaA_forward (TValue *value, TValue *newplace) {
@@ -119,8 +117,9 @@ lua_Ptr luaA_addr (lua_State *L, Table *t, const TValue *key) {
 
 
 lua_Ptr luaA_revive (lua_Ptr ptr) {
-  while (ttisforward(ptr))
+  while (ttisforward(ptr)) {
     ptr = avalue(ptr);
+  }
   lua_assert(isref(ptr));
   return ptr;
 }

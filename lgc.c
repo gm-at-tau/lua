@@ -110,6 +110,7 @@ static void reallymarkobject (global_State *g, GCObject *o);
 static lu_mem atomic (lua_State *L);
 static void entersweep (lua_State *L);
 static void markaddress(global_State *g, TValue *o);
+static void barrierback (global_State *g, GCObject *o);
 
 
 /*
@@ -232,9 +233,13 @@ void luaC_barrier_ (lua_State *L, GCObject *o, GCObject *v) {
 ** pointing to a white object as gray again.
 */
 void luaC_barrierback_ (lua_State *L, GCObject *o) {
-  global_State *g = G(L);
+  lua_assert((G(L)->gckind == KGC_GEN) == (isold(o) && getage(o) != G_TOUCHED1));
+  barrierback(G(L), o);
+}
+
+
+static void barrierback (global_State *g, GCObject *o) {
   lua_assert(isblack(o) && !isdead(g, o));
-  lua_assert((g->gckind == KGC_GEN) == (isold(o) && getage(o) != G_TOUCHED1));
   if (getage(o) == G_TOUCHED2)  /* already in gray list? */
     set2gray(o);  /* make it gray to become touched1 */
   else  /* link it in 'grayagain' and paint it gray */
@@ -571,10 +576,9 @@ static void traversestrongtable (global_State *g, Table *h) {
       markvalue(g, gval(n));
     }
   }
-  if (refs > 0 && g->gcstate == GCSpropagate)
-    linkobjgclist(obj2gco(h), g->grayagain);
-  else
-    genlink(g, obj2gco(h));
+  genlink(g, obj2gco(h));
+  if (refs > 0)
+    barrierback(g, obj2gco(h));
 }
 
 
@@ -610,10 +614,9 @@ static int traverseudata (global_State *g, Udata *u) {
     markvalue(g, uv);
     refs += ttisaddress(uv);
   }
-  if (refs > 0 && g->gcstate == GCSpropagate)
-    linkobjgclist(obj2gco(u), g->grayagain);
-  else
-    genlink(g, obj2gco(u));
+  genlink(g, obj2gco(u));
+  if (refs > 0)
+    barrierback(g, obj2gco(u));
   return 1 + u->nuvalue;
 }
 
@@ -646,8 +649,8 @@ static int traverseCclosure (global_State *g, CClosure *cl) {
     markvalue(g, uv);
     refs += ttisaddress(uv);
   }
-  if (refs > 0 && g->gcstate == GCSpropagate)
-    linkobjgclist(obj2gco(cl), g->grayagain);
+  if (refs > 0)
+    barrierback(g, obj2gco(cl));
   return 1 + cl->nupvalues;
 }
 
@@ -667,8 +670,8 @@ static int traverseLclosure (global_State *g, LClosure *cl) {
       refs += ttisaddress(uv->v.p);
     }
   }
-  if (refs > 0 && g->gcstate == GCSpropagate)
-    linkobjgclist(obj2gco(cl), g->grayagain);
+  if (refs > 0)
+    barrierback(g, obj2gco(cl));
   return 1 + cl->nupvalues;
 }
 
@@ -717,10 +720,9 @@ static int traversebox (global_State *g, GCBox *b) {
   unsigned int refs = 0;
   markvalue(g, boxedvalue(b));
   refs = ttisaddress(boxedvalue(b));
-  if (refs > 0 && g->gcstate == GCSpropagate)
-    linkobjgclist(obj2gco(b), g->grayagain);
-  else
-    genlink(g, obj2gco(b));
+  genlink(g, obj2gco(b));
+  if (refs > 0)
+    barrierback(g, obj2gco(b));
   return 1;
 }
 
@@ -1407,6 +1409,7 @@ static lu_mem entergen (lua_State *L, global_State *g) {
   luaC_runtilstate(L, bitmask(GCSpause));  /* prepare to start a new cycle */
   luaC_runtilstate(L, bitmask(GCSpropagate));  /* start new cycle */
   numobjs = atomic(L);  /* propagates all and then do the atomic stuff */
+  luaA_collect(L);
   atomic2gen(L, g);
   setminordebt(g);  /* set debt assuming next cycle will be minor */
   return numobjs;
@@ -1639,7 +1642,6 @@ static lu_mem atomic (lua_State *L) {
   clearbyvalues(g, g->weak, origweak);
   clearbyvalues(g, g->allweak, origall);
   luaS_clearcache(g);
-  luaA_collect(L);
   g->currentwhite = cast_byte(otherwhite(g));  /* flip current white */
   lua_assert(g->gray == NULL);
   return work;  /* estimate of slots marked by 'atomic' */
@@ -1686,6 +1688,7 @@ static lu_mem singlestep (lua_State *L) {
     }
     case GCSenteratomic: {
       work = atomic(L);  /* work is what was traversed by 'atomic' */
+      luaA_collect(L);
       entersweep(L);
       g->GCestimate = gettotalbytes(g);  /* first estimate */
       break;
