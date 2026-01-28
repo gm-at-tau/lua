@@ -1,5 +1,6 @@
 print("testing pointer")
 local gc = { "incremental", "generational" }
+local original = collectgarbage("incremental")
 
 for _, opt in ipairs(gc) do
 	collectgarbage()
@@ -221,7 +222,13 @@ for _, opt in ipairs(gc) do
 			end
 		end
 	end
+	collectgarbage()
+	if T then T.checkmemory() end
 end
 
 print(string.rep("-", 20))
+
+collectgarbage(original)
+collectgarbage()
+
 print "OK"

@@ -112,6 +112,13 @@ static void entersweep (lua_State *L);
 static void markaddress(global_State *g, TValue *o);
 static void barrierback (global_State *g, GCObject *o);
 
+#define barriercheck(g,o)  \
+  ((g->gckind == KGC_GEN) == (isold(o) && getage(o) != G_TOUCHED1))
+
+#define movebarrier(g,o)	{ \
+  if (g->gcstate != GCSatomic && barriercheck(g, o)) { \
+    barrierback(g, obj2gco(o)); } }
+
 
 /*
 ** {======================================================
@@ -233,13 +240,13 @@ void luaC_barrier_ (lua_State *L, GCObject *o, GCObject *v) {
 ** pointing to a white object as gray again.
 */
 void luaC_barrierback_ (lua_State *L, GCObject *o) {
-  lua_assert((G(L)->gckind == KGC_GEN) == (isold(o) && getage(o) != G_TOUCHED1));
   barrierback(G(L), o);
 }
 
 
 static void barrierback (global_State *g, GCObject *o) {
   lua_assert(isblack(o) && !isdead(g, o));
+  lua_assert(barriercheck(g, o));
   if (getage(o) == G_TOUCHED2)  /* already in gray list? */
     set2gray(o);  /* make it gray to become touched1 */
   else  /* link it in 'grayagain' and paint it gray */
@@ -578,7 +585,7 @@ static void traversestrongtable (global_State *g, Table *h) {
   }
   genlink(g, obj2gco(h));
   if (refs > 0)
-    barrierback(g, obj2gco(h));
+    movebarrier(g, h);
 }
 
 
@@ -616,7 +623,7 @@ static int traverseudata (global_State *g, Udata *u) {
   }
   genlink(g, obj2gco(u));
   if (refs > 0)
-    barrierback(g, obj2gco(u));
+    movebarrier(g, u);
   return 1 + u->nuvalue;
 }
 
@@ -650,7 +657,7 @@ static int traverseCclosure (global_State *g, CClosure *cl) {
     refs += ttisaddress(uv);
   }
   if (refs > 0)
-    barrierback(g, obj2gco(cl));
+    movebarrier(g, cl);
   return 1 + cl->nupvalues;
 }
 
@@ -671,7 +678,7 @@ static int traverseLclosure (global_State *g, LClosure *cl) {
     }
   }
   if (refs > 0)
-    barrierback(g, obj2gco(cl));
+    movebarrier(g, cl);
   return 1 + cl->nupvalues;
 }
 
@@ -717,12 +724,11 @@ static int traversethread (global_State *g, lua_State *th) {
 
 
 static int traversebox (global_State *g, GCBox *b) {
-  unsigned int refs = 0;
+  unsigned int refs = ttisaddress(boxedvalue(b));
   markvalue(g, boxedvalue(b));
-  refs = ttisaddress(boxedvalue(b));
   genlink(g, obj2gco(b));
   if (refs > 0)
-    barrierback(g, obj2gco(b));
+    movebarrier(g, b);
   return 1;
 }
 
